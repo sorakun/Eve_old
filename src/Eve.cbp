@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Eve programming language" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Option show_notes="0">
+			<notes>
+				<![CDATA[Eve programming language's source code.
+
+Inorder to compile Eve correctly, you need to download and compile Tiny C Compiler (tcc), compile it, and then add the dir of "tcclib.h" to the compiler search directory, and link "libtcc.a" to the project.
+
+Enjoy forking Eve!]]>
+			</notes>
+		</Option>
+		<Build>
+			<Target title="Linux_86bit">
+				<Option platforms="Unix;" />
+				<Option output="../bin/eve" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../bin/" />
+				<Option object_output="../obj/bin/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-ldl" />
+					<Add option="-ltcc" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-g" />
+		</Compiler>
+		<Unit filename="codegen.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="compiler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="error.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="error.h" />
+		<Unit filename="eve.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="eve.h" />
+		<Unit filename="functions.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="functions.h" />
+		<Unit filename="includes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="includes.h" />
+		<Unit filename="lex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lex.h" />
+		<Unit filename="memory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="memory.h" />
+		<Unit filename="parse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="parse.h" />
+		<Unit filename="readfile.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="threads.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="threads.h" />
+		<Unit filename="typecheck.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="types.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="types.h" />
+		<Unit filename="variables.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="variables.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,40 @@
+
+FIXES:
+  - Added import statement, but still not fully implemented.
+  - Loops: for, while, repeat .. until.
+  - if, elif, else statements.
+  - substract work in unary and binary modes.
+  - local variables supported.
+  - Comments are working.
+  - multiple variable defenition and assignment is working "int x = 3, y = 2;".
+  - Return implemented.
+  - Break and continue are implemented.
+  - Boolean data types supported.
+  - Operators "==", "!=", "=", "<", ">", "<=", ">=", "and", "or", "xor" and "not" are working perfectly, with multityped  feature.
+  - Recursivity supported.
+  - Seperated defenitions and declarations not supported. 
+  - Fixed error while assigning a variable (error of type checking).
+  - Fixed an error of segmentation fault while looking for a variable defenition in code generation.
+  - Ability to add a C file, or a static library using "cimport" keyword.
+  - String concat with "+" operator.
+  
+NON Fixses:
+  - Defining simple data types is buggy (ex: "type x is int").  
+  - Operations priorities is not stable.
+  - Operations types and their operands is not stable.
+  - Exceptions not implemented yet try .. catch .. throw.
+  - Creation of data types and complex data types is not possible (enums, arrays, records, ranges, etc).
+  - Instructions in the global thread are nor reported, but they are not generated.
+  - The following operations are nor working: "++", "--", "+=", "-=", "*=", "/=", "<<", ">>", "%=" "<<=" and ">>="
+  - Switch statement not implemented.
+  - foreach loop statement not implemented (require array/range data types which are not impletemented yet). 
+  - Step is not implemented in for loop statement (likely to be replaced by C like loop statement).
+  - with .. do statement not supported (thinking about dropping it).
+
+Non critic but required:
+  - Parser optimization.
+  - Compiler flags.
+ 
+Upcoming features:
+  - Object oriented programming (purely OPP style).
+  - Preprocessor

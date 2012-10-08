@@ -1,0 +1,153 @@
+# depslib dependency file v1.0
+1349443376 source:/home/sorakun/dev/Eve/src/codegen.c
+	<stdlib.h>
+	<string.h>
+	<stdio.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+	"includes.h"
+
+1349549402 /home/sorakun/dev/Eve/src/eve.h
+
+1349443904 /home/sorakun/dev/Eve/src/error.h
+
+1349342526 /home/sorakun/dev/Eve/src/lex.h
+	"eve.h"
+
+1349214700 /home/sorakun/dev/Eve/src/parse.h
+	"eve.h"
+	"lex.h"
+
+1349378980 /home/sorakun/dev/Eve/src/includes.h
+	"eve.h"
+	"lex.h"
+
+1349549604 source:/home/sorakun/dev/Eve/src/error.c
+	<stdio.h>
+	<stdarg.h>
+	"eve.h"
+	"lex.h"
+	"error.h"
+
+1349605990 source:/home/sorakun/dev/Eve/src/eve.c
+	<stdio.h>
+	<stdlib.h>
+	"eve.h"
+	"lex.h"
+	"parse.h"
+	"error.h"
+
+1348926716 source:/home/sorakun/dev/Eve/src/functions.c
+	<stdlib.h>
+	<string.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+
+1349514008 source:/home/sorakun/dev/Eve/src/includes.c
+	<stdlib.h>
+	<string.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+	"threads.h"
+	"includes.h"
+
+1348926714 /home/sorakun/dev/Eve/src/threads.h
+	"eve.h"
+	"lex.h"
+
+1348926716 source:/home/sorakun/dev/Eve/src/lex.c
+	<string.h>
+	<ctype.h>
+	<stdio.h>
+	"eve.h"
+	"lex.h"
+	"memory.h"
+	"error.h"
+
+1348926714 /home/sorakun/dev/Eve/src/memory.h
+	"eve.h"
+
+1348926716 source:/home/sorakun/dev/Eve/src/memory.c
+	<stdlib.h>
+	"eve.h"
+	"error.h"
+
+1349550850 source:/home/sorakun/dev/Eve/src/parse.c
+	<stdlib.h>
+	<string.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+	"types.h"
+	"threads.h"
+	"includes.h"
+
+1348926714 /home/sorakun/dev/Eve/src/types.h
+	"eve.h"
+	"lex.h"
+
+1349518968 source:/home/sorakun/dev/Eve/src/readfile.c
+	<stdlib.h>
+	<string.h>
+	<stdio.h>
+	"eve.h"
+	"error.h"
+
+1348996824 source:/home/sorakun/dev/Eve/src/threads.c
+	<stdlib.h>
+	<string.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+	"threads.h"
+
+1349439464 source:/home/sorakun/dev/Eve/src/typecheck.c
+	<stdlib.h>
+	<string.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+	"types.h"
+	"variables.h"
+	"threads.h"
+
+1348926714 /home/sorakun/dev/Eve/src/variables.h
+	"eve.h"
+	"lex.h"
+
+1349381588 source:/home/sorakun/dev/Eve/src/types.c
+	<stdlib.h>
+	<string.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+
+1349442772 source:/home/sorakun/dev/Eve/src/variables.c
+	<stdlib.h>
+	<string.h>
+	"eve.h"
+	"error.h"
+	"lex.h"
+	"parse.h"
+	"threads.h"
+	"variables.h"
+	"types.h"
+
+1349649858 source:/home/sorakun/dev/Eve/src/compiler.c
+	<libtcc.h>
+	<stdio.h>
+	"error.h"
+	"includes.h"
+
+1242656826 /home/sorakun/dev/Eve/src/libtcc.h
+

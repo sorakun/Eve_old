@@ -1,0 +1,14 @@
+
+cdef proc printf from stdio;
+cdef proc malloc from stdlib;
+cdef func str cpystr;
+
+cimport "clib/strlib.c";
+
+func int main
+  str x = "Hello!";
+  #x = cpystr("LOL ");
+  str y = x+x;
+  str z = x+y;
+  printf("x = %s.\n", y);
+end

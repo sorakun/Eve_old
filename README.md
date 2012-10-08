@@ -1,4 +1,0 @@
-Eve
-===
-
-Eve programming language
