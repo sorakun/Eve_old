@@ -26,6 +26,8 @@
 #ifndef EVE_EVE_H
 #define EVE_EVE_H
 
+#include <stdio.h>
+
 #define string char *
 
 //#define EVE_DEBUG
@@ -37,5 +39,29 @@
 #endif
 
 #define EVE_VERSION "0.0.1"
+
+#define EVE_CMD_OUTPUT \
+"Eve programming language version %s.\
+\n\
+Usage: eve [-c] [-r] [-o]\n\
+           [-l] [-p] [-w]\n\
+\n\
+-c [file]        : Compiles the file.\n\
+-r [file]        : Executes the binary file after compiling it.\n\
+-o [bin/dyn/obj] : The output should be Executable, dynamic lib or object file.\n\
+-l [lib:         : Include a static library.\n\
+-p [file]        : Change binary output\'s name\n\
+-w               : Disable warnings.\n\
+"
+
+FILE * debug_file;
+
+string compile_file;
+string compiled_file;
+
+int eve_enable_debug; /* still not working */
+int eve_enable_warning;
+int buildmode;   /* 0: Compile, 1: Run */
+int output_type; /* 1 executable, 2 dynamic library, 3 object file */
 
 #endif

@@ -79,6 +79,7 @@ string get_op_type(tStatementNode * node, tThread * thread)
         string op1;
         string op2;
         string type;
+        tType tmp;
         switch (node->type.TT)
         {
         case '+':
@@ -331,13 +332,20 @@ string get_op_type(tStatementNode * node, tThread * thread)
             return "bool";
 
         case NOT:
-        {
             match_type(node->unary, "bool", thread);
             return "bool";
-        }
 
         case _IN:
             return "bool";
+
+        case '@':
+            tmp = find_type(get_type_of(node->unary, thread));
+            type = find_type_pointerto(tmp.pointerto, 1);
+            if(type == NULL)
+                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                         node->type.source, node->type.line_num,
+                         node->type.pos, node->type.str);
+            return type;
         }
     }
     else if(func_is_defined(node->type.str))
@@ -358,7 +366,12 @@ string get_op_type(tStatementNode * node, tThread * thread)
             match_type(node->args[i], fn->params[i].type, thread);
         }
         tType tmp = find_type(fn->return_type);
-        return find_type_pointerto(fn->return_type, tmp.pointer);
+        string type = find_type_pointerto(tmp.pointerto, tmp.pointer);
+        if(type == NULL)
+            eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                            node->type.source, node->type.line_num,
+                            node->type.pos, node->type.str);
+        return type;
     }
     else if (proc_is_defined(node->type.str))
     {
@@ -369,7 +382,12 @@ string get_op_type(tStatementNode * node, tThread * thread)
     {
         tVar tmpVar = find_variable(node->type.str, thread);
         tType tmp = find_type(tmpVar.type);
-        return find_type_pointerto(tmp.pointerto, tmp.pointer);
+        string type = find_type_pointerto(tmp.pointerto, tmp.pointer);
+            if(type == NULL)
+                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                         node->type.source, node->type.line_num,
+                         node->type.pos, node->type.str);
+        return type;
     }
     eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifier '%s' is not defined.",
                      node->type.source, node->type.line_num, node->type.pos, node->type.str);

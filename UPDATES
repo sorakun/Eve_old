@@ -1,5 +1,11 @@
-
-FIXES:
+------
+Fixes:
+------
+  
+  - Pointers are now Implemented, still the way to read their value with "^" operator.
+  - Fixed unary problem with substract, because this operation is partially unary (not always).
+  - Few optimization to parser, for small inputs it do not have big impact. The effect appears in massive inputs.
+  - Command line arguments partially working.
   - Added import statement, but still not fully implemented.
   - Loops: for, while, repeat .. until.
   - if, elif, else statements.
@@ -18,7 +24,10 @@ FIXES:
   - Ability to add a C file, or a static library using "cimport" keyword.
   - String concat with "+" operator.
   
-NON Fixses:
+-----------  
+Non fixses:
+-----------
+
   - Defining simple data types is buggy (ex: "type x is int").  
   - Operations priorities is not stable.
   - Operations types and their operands is not stable.
@@ -30,11 +39,17 @@ NON Fixses:
   - foreach loop statement not implemented (require array/range data types which are not impletemented yet). 
   - Step is not implemented in for loop statement (likely to be replaced by C like loop statement).
   - with .. do statement not supported (thinking about dropping it).
-
+  
+------------------------
 Non critic but required:
+------------------------
+
   - Parser optimization.
   - Compiler flags.
- 
+  
+------------------
 Upcoming features:
+------------------
+
   - Object oriented programming (purely OPP style).
   - Preprocessor

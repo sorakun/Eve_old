@@ -27,7 +27,8 @@ Enjoy forking Eve!]]>
 				</Compiler>
 				<Linker>
 					<Add option="-ldl" />
-					<Add option="-ltcc" />
+					<Add library="../../tcc-0.9.25/libtcc.a" />
+					<Add library="../../tcc-0.9.25/libtcc1.a" />
 				</Linker>
 			</Target>
 		</Build>

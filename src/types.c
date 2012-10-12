@@ -96,8 +96,6 @@ string find_type_pointerto(string pointed, int pointer)
           debugf("%s founded\n", global_types[i].name);
           return global_types[i].name;
         }
-
-    return NULL;
 }
 
 string mod_to_str(tMod mod)

@@ -15,7 +15,7 @@
 #define EVE_IDENTIFIER_REDEFINITON  5
 #define EVE_UNKNOWN_DATA_TYPE       6
 #define EVE_EOF_WITH_MISSING_SYNTAX 7
-#define EVE_UNKNOWN_DATA_TYPE       8 // !!!!!!!!!!!!!!!!
+#define EVE_                        8
 #define EVE_ID_ALREADY_DEFINED      9
 #define EVE_WRONG_MOD_EXPECTED     10
 #define EVE_UNDEFINED_DATA_TYPE    11

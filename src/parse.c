@@ -25,7 +25,7 @@ void initparser(LexInfo * li, tThread * thread)
 
 int op_is_unary(token_node token)
 {
-    return token.TT == '@' || token.TT == NOT || token.TT == '-' || token.TT == RETURN;
+    return token.TT == '@' || token.TT == NOT || token.TT == RETURN;
 }
 
 int is_constant(token_node token)
@@ -637,11 +637,6 @@ void dovariable(LexInfo * li, tThread * thread)
 l:
         lexstep(li);
         debugf("[dovariable]: \"%s\"\n", currenttokenstring(li));
-        if (currenttoken(li) == '^')
-        {
-            is_pointer = 1;
-            lexstep(li);
-        }
         match(li, IDENTIFIER);
         int b = 1; // if local do not check in parents
         if(tmp_mod == _local)
@@ -664,12 +659,15 @@ l:
 
             if(tmp_pos == -1)
                 eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-            // int x = 3;
-            // int x, y = 3;
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread);
             string tname = get_type_of(thread->instructions[thread->icount]->left, thread);
             tType tmp = find_type(tname);
-            match_type(thread->instructions[thread->icount]->right, find_type_pointerto(tmp.pointerto, tmp.pointer), thread);
+            string type = find_type_pointerto(tmp.pointerto, tmp.pointer);
+            if(type == NULL)
+                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                         li->source, thread->instructions[thread->icount]->left->type.line_num,
+                         thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+            match_type(thread->instructions[thread->icount]->right, type, thread);
             thread->icount++;
             li->pos = tmp_pos-1;
         }
@@ -690,7 +688,13 @@ l:
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread);
             string tname = get_type_of(thread->instructions[thread->icount]->left, thread);
             tType tmp = find_type(tname);
-            match_type(thread->instructions[thread->icount]->right, find_type_pointerto(tmp.pointerto, tmp.pointer), thread);
+            string type = find_type_pointerto(tmp.pointerto, tmp.pointer);
+            if(type == NULL)
+                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                         li->source, thread->instructions[thread->icount]->left->type.line_num,
+                         thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+
+            match_type(thread->instructions[thread->icount]->right, type, thread);
             thread->icount++;
 
             li->pos = tmp_pos;
@@ -747,12 +751,6 @@ void dofunction(LexInfo * li, tThread * thread)
         eve_custom_error(EVE_UNKNOWN_DATA_TYPE,"file: '%s', line: %d, pos: %d, identifier '%s' is not a valid data type.",li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
     string ttype = strdup(currenttokenstring(li));
     lexstep(li);
-    int tispointer=0;
-    if(currenttoken(li)=='^')
-    {
-        tispointer = 1;
-        lexstep(li);
-    }
     match(li, IDENTIFIER);
     string tname = strdup(currenttokenstring(li));
     string tmpType, tmpName;
@@ -796,11 +794,6 @@ l:
                     eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
                 tmpType = strdup(currenttokenstring(li));
                 lexstep(li);
-                if(currenttoken(li) == '^')
-                {
-                    ispointer = 1;
-                    lexstep(li);
-                }
                 match(li, IDENTIFIER);
                 if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
                 {
@@ -808,7 +801,6 @@ l:
                     debugf("current name = %s\n", currenttokenstring(li));
                     args = (tVar*)eve_realloc(args, count*sizeof(tVar));
                     args[count-1].mod = tmpmod;
-                    //args[count-1].pointer = ispointer;
                     args[count-1].name = currenttokenstring(li);
                     args[count-1].type = tmpType;
                 }
@@ -849,7 +841,8 @@ void doprocedure(LexInfo * li, tThread * thread)
     string tmpType, tmpName;
     // name should be unique
     if(!name_is_unique(tname, thread))
-        eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, identifier '%s' is already defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+        eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, identifier '%s' is already defined.",
+                         li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
     // with or without parameters
     lexstep(li);
     tMod tmpmod = _none;
@@ -887,11 +880,6 @@ l:
                     eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
                 tmpType = strdup(currenttokenstring(li));
                 lexstep(li);
-                if(currenttoken(li) == '^')
-                {
-                    ispointer = 1;
-                    lexstep(li);
-                }
                 match(li, IDENTIFIER);
                 if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
                 {
@@ -899,7 +887,6 @@ l:
                     debugf("current name = %s\n", currenttokenstring(li));
                     args = (tVar*)eve_realloc(args, count*sizeof(tVar));
                     args[count-1].mod = tmpmod;
-                    //args[count-1].pointer = ispointer;
                     args[count-1].name = currenttokenstring(li);
                     args[count-1].type = tmpType;
                 }

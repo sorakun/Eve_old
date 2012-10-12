@@ -6,5 +6,6 @@ Variables' pointers in Eve can not defined directly (ex: "int ^ p").
 The user should create a pointer type (ex:"type pint is ^ int;") and 
 then defines his variables with that data type.
 
-Memory allocation is optional, Because Eve already extends arrays, while associating values to them.
+Memory allocation is optional, Because Eve already extends arrays, 
+while associating values to them.
 

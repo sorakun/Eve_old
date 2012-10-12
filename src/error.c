@@ -65,7 +65,7 @@ string getErrorType(int type)
     case 7:
         return "End of file with missing syntax";
     case 8:
-        return "Uknown data type.";
+        return "";
     case 9:
         return "Identifier already defined.";
     case 10:

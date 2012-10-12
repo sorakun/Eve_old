@@ -114,7 +114,7 @@ void outputnode(tStatementNode*node, int EOS)
     else if (token_is_op(node->type))
     {
         fprintf(out, "(");
-        if (op_is_unary(node->type) || ((node->type.TT == '-' )&&(node->left == NULL)))
+        if (op_is_unary(node->type) || ((node->type.TT == '-' ) && (node->left == NULL)))
         {
             debugf("[codegen]: op %s is unary\n", node->type.str);
             fprintf(out, " %s ", get_token_str(node->type));
