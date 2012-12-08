@@ -27,7 +27,7 @@ void add_inc(string path)
 {
     int i = 0;
     for (; i<included_files_count; i++)
-      if(strcmp(path, included_files[i]) == 0)
+        if(strcmp(path, included_files[i]) == 0)
         {
             eve_warning("File %s was already imported (it wont be imported twice).", included_files[i]);
             return;
@@ -39,12 +39,13 @@ void add_inc(string path)
 
 void add_cinc(string path)
 {
-    int i = 0; int x = strlen(path)-2;
+    int i = 0;
+    int x = strlen(path)-2;
     string path2=(string)malloc(x*sizeof(char));
     strncpy(path2, path+1, x);
     path2[x] = '\0';
     for (; i<cimport_files_count; i++)
-      if(strcmp(path2, cimport_files[i]) == 0)
+        if(strcmp(path2, cimport_files[i]) == 0)
         {
             eve_warning("C file %s was already imported (it wont be imported twice).", cimport_files[i]);
             return;

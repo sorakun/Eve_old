@@ -22,11 +22,11 @@ void ignore(const char * msg, ...)
 
 void init_debugger(string file)
 {
-    #ifdef EVE_DEBUG
-        debug_file = fopen("debug.txt", "w");
-        fprintf(debug_file, "debugging file %s.\n", file);
-        fclose(debug_file);
-    #endif
+#ifdef EVE_DEBUG
+    debug_file = fopen("debug.txt", "w");
+    fprintf(debug_file, "debugging file %s.\n", file);
+    fclose(debug_file);
+#endif
 }
 
 void debug(const char * msg, ...)
@@ -65,7 +65,7 @@ string getErrorType(int type)
     case 7:
         return "End of file with missing syntax";
     case 8:
-        return "";
+        return "Invalid use of nil";
     case 9:
         return "Identifier already defined.";
     case 10:

@@ -24,22 +24,22 @@ tType * create_global_types()
 
     types[0].name = strdup("int");
     types[0].pointer = 0;
-    types[0].pointerto = strdup("int");
+    types[0].pointerto = NULL;
     types[1].name = strdup("str");
     types[1].pointer = 0;
-    types[1].pointerto = strdup("str");
+    types[1].pointerto = NULL;
     types[2].name = strdup("float");
     types[2].pointer = 0;
-    types[2].pointerto = strdup("float");
+    types[2].pointerto = NULL;
     types[3].name = strdup("char");
     types[3].pointer = 0;
-    types[3].pointerto = strdup("char");
+    types[3].pointerto = NULL;
     types[4].name = strdup("bool");
     types[4].pointer = 0;
-    types[4].pointerto = strdup("bool");
+    types[4].pointerto = NULL;
     types[5].name = strdup("void");
     types[5].pointer = 0;
-    types[5].pointerto = strdup("void");
+    types[5].pointerto = NULL;
 
     return types;
 }
@@ -85,17 +85,28 @@ tType find_type(string name)
     }
 }
 
-string find_type_pointerto(string pointed, int pointer)
+string find_type_pointerto(tType typ)
 {
-    debugf("Looking for %s is pointer = %d\n", pointed, pointer);
-    int i;
-    for (i = 0; i < global_types_count; i++)
-      if (strcmp(pointed, global_types[i].pointerto) == 0)
-        if(global_types[i].pointer == pointer)
+    debugf("Looking for %s is pointer = %d\n", typ.name, typ.pointer);
+    tType tmp;
+    if (typ.pointer == 0)
+    {
+        if (typ.pointerto != NULL)
         {
-          debugf("%s founded\n", global_types[i].name);
-          return global_types[i].name;
+            tmp = find_type(typ.pointerto);
+            return find_type_pointerto(tmp);
         }
+        return typ.name;
+    }
+
+    // is it a pointer
+
+    tmp = find_type(typ.pointerto);
+    if (tmp.pointer == 0)
+        return find_type_pointerto(tmp);
+    else
+        return tmp.name;
+
 }
 
 string mod_to_str(tMod mod)
@@ -111,7 +122,8 @@ string mod_to_str(tMod mod)
     case _local:
         return "";
     case _volatile:
-        "volatile";
+        "volatile"
+        ;
     case _var:
         return "";
     }
@@ -154,3 +166,26 @@ tMod token_to_mod(token_node token)
     }
 }
 
+int enum_is_defined(char * name)
+{
+    debugf("enum_is_defined checking %s.\n", name);
+    int i, j;
+    for(i=BASIC_TYPES_COUNT; i<global_types_count; i++)
+    {
+        if (global_types[i].type_kind == __enum)
+        {
+            for(j=0; j<global_types[i].ecount; j++)
+            {
+
+                debugf("comparing %s with %s", name, global_types[i].enums[j]);
+                if (strcmp(global_types[i].enums[j], name) == 0 )
+                {
+                    return 1;
+                }
+
+            }
+        }
+    }
+
+    return 0;
+}

@@ -1,8 +1,17 @@
+
 ------
 Fixes:
 ------
-  
-  - Pointers are now Implemented, still the way to read their value with "^" operator.
+  -	Fixed the function and procedure Redefinition (splitting declaration and definition).
+  - Type enumerator is now implemented.
+  - Fixed the sub blocks generator "begin .. end".
+  - Fixed the sub block which does not defines it own local variables. Instead it uses main function's variables. (if, else if, while, repeat, for, begin, ...)
+  - for .. loop generated a "<=" condition which does not work for negative loops; now replaced with "!=" for both use.
+  - Added index operator ":" to access arrays.
+  - nil value can be assigned, and only to pointers and as a right operand!
+  - Operations priorities are more stable.  
+  - Operator "^" added, to get the value pointed by a pointer (still type checking, partially working).
+  - Pointers are now Implemented.
   - Fixed unary problem with substract, because this operation is partially unary (not always).
   - Few optimization to parser, for small inputs it do not have big impact. The effect appears in massive inputs.
   - Command line arguments partially working.
@@ -16,25 +25,25 @@ Fixes:
   - Return implemented.
   - Break and continue are implemented.
   - Boolean data types supported.
-  - Operators "==", "!=", "=", "<", ">", "<=", ">=", "and", "or", "xor" and "not" are working perfectly, with multityped  feature.
+  - Operators "==", "!=", "=", "<", ">", "<=", ">=", "and", "or", "xor" and "not" are working perfectly.
   - Recursivity supported.
-  - Seperated defenitions and declarations not supported. 
+  - Seperated defenitions and declarations supported. 
   - Fixed error while assigning a variable (error of type checking).
   - Fixed an error of segmentation fault while looking for a variable defenition in code generation.
   - Ability to add a C file, or a static library using "cimport" keyword.
   - String concat with "+" operator.
+  - String repeat with "*" operator.
   
 -----------  
 Non fixses:
 -----------
 
-  - Defining simple data types is buggy (ex: "type x is int").  
-  - Operations priorities is not stable.
-  - Operations types and their operands is not stable.
-  - Exceptions not implemented yet try .. catch .. throw.
-  - Creation of data types and complex data types is not possible (enums, arrays, records, ranges, etc).
-  - Instructions in the global thread are nor reported, but they are not generated.
-  - The following operations are nor working: "++", "--", "+=", "-=", "*=", "/=", "<<", ">>", "%=" "<<=" and ">>="
+  - Arrays are not fully working, still need to implement the automatic (and manual) memory allocator.
+  - Operations types and their operands are not stable. (?)
+  - Exceptions not implemented yet (try .. catch .. throw).
+  - Creation of data types and complex data types is partially possible (enums, arrays, records, ranges, etc).
+  - Instructions in the global thread are not reported, but they are not generated within the C source code.
+  - The following operations are not implemented: "++", "--", "+=", "-=", "*=", "/=", "<<", ">>", "%=" "<<=" and ">>=" (parser, type checker and code generator).
   - Switch statement not implemented.
   - foreach loop statement not implemented (require array/range data types which are not impletemented yet). 
   - Step is not implemented in for loop statement (likely to be replaced by C like loop statement).
@@ -51,5 +60,13 @@ Non critic but required:
 Upcoming features:
 ------------------
 
-  - Object oriented programming (purely OPP style).
+  - Object oriented programming.
   - Preprocessor
+
+-------------
+What's Wrong:
+-------------
+
+  - On Windows7, the application does not run properly, unless the application is set to Windows XP or Windows Vista comptability mode. Maybe because of the compiler I'm using which is Mingw gcc version 4.4.1 (TDM-2 mingw32).
+
+Update history: 7 December 2012 - 19 Oct 2012

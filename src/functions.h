@@ -15,7 +15,7 @@ int func_is_defined(string name);
 
 int proc_is_defined(string name);
 
-tThread * find_func(string name);
+tThread * find_func(string name, tThreadType type);
 
 void init_functions_stack();
 

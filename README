@@ -3,17 +3,19 @@ Welcome to Eve programming language.
 Eve is a general purpose high level programming language.
 The main purpose is to create a language, that can do 
 low level tasks like memory allocation, pointers, etc,
-but in a high level and safe layer.
+but in a higher and safer layer.
 
-Eve also aims to be more readable and easier to understand,
-its syntax is a mix of Caml and Ada, which allow fast typing
-and code readability.
+Eve also comes with powerful C features and an elegent
+syntax which is a mix of Caml and Ada, which allow fast 
+typing and code readability.
 
 Eve features are:
-
+  
   - Cross platform compiler.
   - Imperative (Procedural) programming.
   - Strong typing.
   - Static typing (safe typing).
   - Dynamic memory allocation (TODO).
   - Allow the integration of C libraries/source code.
+  
+  

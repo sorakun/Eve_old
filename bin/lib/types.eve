@@ -1,0 +1,5 @@
+# Eve programming language common data types library.
+
+type pint   is ^ int;
+type pfloat is ^ float;
+type pchar  is ^ char;

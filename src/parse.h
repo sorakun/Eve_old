@@ -31,7 +31,7 @@ typedef struct tField
 typedef enum tType_kind
 {
     __array, __enum, __class, __none, __struct
-}tType_kind;
+} tType_kind;
 
 typedef struct tType
 {
@@ -42,6 +42,10 @@ typedef struct tType
     // fields in case of record
     tField * fields;
     int fcount; // # of fields
+
+    char ** enums; // list of enums
+    int ecount;    // enums count
+
     // methods in case of class
     // TODO.
     int pointer; // is it a pointer?
@@ -53,6 +57,7 @@ typedef struct tVar
     string name;
     string type;
     tMod mod;
+    token_node info;
 } tVar;
 
 typedef enum tThreadType
@@ -71,9 +76,11 @@ typedef struct tStatementNode
             * from, *to, * step; // for .. to .. do
     token_node type;
     // args for functions with multiple parameters
-    struct tThread * thread; // a pointer to thread, usually it's a code block.
+    struct tThread * thread, // a pointer to thread, usually it's a code block.
+            * parent_thread; // The parent thread if the current instruction.
     tVar variable; // is it a variable/identifier?
     struct tStatementNode * parent;
+
     int acount; // # of arguments
 } tStatementNode;
 

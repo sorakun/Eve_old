@@ -24,6 +24,6 @@ tMod token_to_mod(token_node token);
 
 string mod_to_str(tMod mod);
 
-string find_type_pointerto(string pointed, int pointer);
+string find_type_pointerto(tType typ);
 
 #endif

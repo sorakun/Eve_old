@@ -60,7 +60,7 @@ int proc_is_defined(string name)
 
 // this function is unsafe and should be called after making sure
 // that the function exists.
-tThread * find_func(string name)
+tThread * find_func(string name, tThreadType type)
 {
     int i;
     debugf("[find_func] working on %s\n", name);
@@ -71,7 +71,7 @@ tThread * find_func(string name)
         {
             // it should be func not proc
             debugf("[find_func] %s is defined, but is it proc or func\n", name);
-            if(global_functions[i]->type == _func)
+            if(global_functions[i]->type == type)
             {
                 debugf("[func_is_defined] %s is defined\n", name);
                 return global_functions[i];
@@ -79,6 +79,7 @@ tThread * find_func(string name)
         }
     }
 }
+
 
 void init_functions_stack()
 {

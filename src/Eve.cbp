@@ -17,9 +17,9 @@ Enjoy forking Eve!]]>
 		<Build>
 			<Target title="Linux_86bit">
 				<Option platforms="Unix;" />
-				<Option output="../bin/eve" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="../bin/" />
-				<Option object_output="../obj/bin/Debug/" />
+				<Option output="..\bin\eve" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="..\bin\" />
+				<Option object_output="..\obj\bin\Debug\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -27,8 +27,23 @@ Enjoy forking Eve!]]>
 				</Compiler>
 				<Linker>
 					<Add option="-ldl" />
-					<Add library="../../tcc-0.9.25/libtcc.a" />
-					<Add library="../../tcc-0.9.25/libtcc1.a" />
+					<Add option="-ltcc" />
+				</Linker>
+			</Target>
+			<Target title="Win_32bit">
+				<Option platforms="Windows;" />
+				<Option output="..\bin\eve" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="..\bin" />
+				<Option object_output="..\obj\bin\Debug\" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-g" />
+					<Add directory="..\..\tcc-0.9.25\win32\libtcc" />
+				</Compiler>
+				<Linker>
+					<Add library="..\..\tcc-0.9.25\win32\libtcc\libtcc.a" />
 				</Linker>
 			</Target>
 		</Build>
@@ -92,6 +107,9 @@ Enjoy forking Eve!]]>
 			<envvars />
 			<debugger />
 			<lib_finder disable_auto="1" />
+			<wxsmith version="1">
+				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
+			</wxsmith>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

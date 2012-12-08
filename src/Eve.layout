@@ -1,7 +1,73 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
-	<ActiveTarget name="Linux_86bit" />
-	<File name="compiler.c" open="1" top="1" tabpos="1">
-		<Cursor position="276" topLine="1" />
+	<ActiveTarget name="Win_32bit" />
+	<File name="codegen.c" open="0" top="0" tabpos="6">
+		<Cursor position="5165" topLine="156" />
+	</File>
+	<File name="compiler.c" open="0" top="0" tabpos="7">
+		<Cursor position="298" topLine="17" />
+	</File>
+	<File name="error.c" open="0" top="0" tabpos="9">
+		<Cursor position="1117" topLine="43" />
+	</File>
+	<File name="error.h" open="0" top="0" tabpos="11">
+		<Cursor position="1062" topLine="0" />
+	</File>
+	<File name="eve.c" open="0" top="0" tabpos="14">
+		<Cursor position="2135" topLine="50" />
+	</File>
+	<File name="eve.h" open="0" top="0" tabpos="3">
+		<Cursor position="1914" topLine="32" />
+	</File>
+	<File name="functions.c" open="1" top="0" tabpos="4">
+		<Cursor position="1787" topLine="21" />
+	</File>
+	<File name="functions.h" open="1" top="0" tabpos="5">
+		<Cursor position="327" topLine="0" />
+	</File>
+	<File name="includes.c" open="0" top="0" tabpos="0">
+		<Cursor position="646" topLine="0" />
+	</File>
+	<File name="lex.c" open="0" top="0" tabpos="11">
+		<Cursor position="415" topLine="15" />
+	</File>
+	<File name="lex.h" open="0" top="0" tabpos="2">
+		<Cursor position="2122" topLine="62" />
+	</File>
+	<File name="memory.c" open="0" top="0" tabpos="8">
+		<Cursor position="329" topLine="0" />
+	</File>
+	<File name="memory.h" open="0" top="0" tabpos="15">
+		<Cursor position="0" topLine="0" />
+	</File>
+	<File name="parse.c" open="1" top="1" tabpos="1">
+		<Cursor position="38376" topLine="947" />
+	</File>
+	<File name="parse.h" open="1" top="0" tabpos="6">
+		<Cursor position="1136" topLine="38" />
+	</File>
+	<File name="readfile.c" open="0" top="0" tabpos="12">
+		<Cursor position="884" topLine="0" />
+	</File>
+	<File name="threads.c" open="1" top="0" tabpos="2">
+		<Cursor position="571" topLine="2" />
+	</File>
+	<File name="threads.h" open="0" top="0" tabpos="0">
+		<Cursor position="216" topLine="0" />
+	</File>
+	<File name="typecheck.c" open="1" top="0" tabpos="3">
+		<Cursor position="22519" topLine="474" />
+	</File>
+	<File name="types.c" open="0" top="0" tabpos="12">
+		<Cursor position="4139" topLine="137" />
+	</File>
+	<File name="types.h" open="0" top="0" tabpos="13">
+		<Cursor position="537" topLine="0" />
+	</File>
+	<File name="variables.c" open="0" top="0" tabpos="10">
+		<Cursor position="966" topLine="30" />
+	</File>
+	<File name="variables.h" open="0" top="0" tabpos="0">
+		<Cursor position="225" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

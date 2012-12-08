@@ -66,7 +66,7 @@ void parse_cmds(int argc, char **argv)
         eve_custom_error(0, "Invalid argument number %d, \"%s\".", i+1, argv[i]);
     }
     if(compiled_file == NULL)
-      compiled_file = extract_name(compile_file);
+        compiled_file = extract_name(compile_file);
 }
 
 int main(int argc, char **argv)
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     init_debugger(argv[1]);
     for (i = 0; i < argc; i++)
         debugf("argv[%d] = \"%s\"\n", i, argv[i]);
-    lib_path = strdup("");
+    lib_path = strdup("lib/");
 
     if (argc < 2)
     {
@@ -91,6 +91,7 @@ int main(int argc, char **argv)
     li = Lex_Begin(compile_file, readfile(compile_file));
     global_thread = create_thread(_main, NULL, "__main__", "void", NULL, 0, 0, 0, 0);
     start_parse(&li);
+    debugf("parsing ended successfully.\n");
     string src = strdup(gen_code(compile_file, global_thread));
     eve_compile(src, argc, argv);
     return 0;

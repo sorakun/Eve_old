@@ -29,6 +29,8 @@ string token_get_string(int token)
         return "identifier";
     if (token == LITERAL)
         return "string";
+    if (token == CHAR)
+        return "char";
     for(; i < TokensCount; i++)
         if (token == Tokens[i].type)
             return Tokens[i].str;
@@ -79,9 +81,10 @@ token_node Lex_Step(LexInfo * li)
                 li->pos++;
             }
             li->line_num++;
-	    li->pos++;
+            li->pos++;
         }
-    }while(done==0);
+    }
+    while(done==0);
 
     /* INIT after skipping spaces/lines */
 
@@ -547,7 +550,7 @@ LexInfo Lex_Begin(const string src, const string input)
         {
             li.TokenInfo = (token_node *)realloc(li.TokenInfo, (li.size+1) * sizeof(token_node));
             li.TokenInfo[li.size] = tmpToken;
-            debugf("|%s", li.TokenInfo[li.size].str);
+            debugf("%d|%s", li.size, li.TokenInfo[li.size].str);
             li.size++;
         }
     }

@@ -1,0 +1,4 @@
+# Eve programming language input/output library.
+
+cdef proc printf from stdio; # This will include stdio.h, no need to do repeat it.
+cdef proc scanf;

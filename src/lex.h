@@ -16,11 +16,13 @@
 typedef enum tTokenType
 {
     /* reserved keywords. */
+    /* enums starts from -100 because we use the ASCII code of single char tokens to identify them */
+
     AND = -100, AS, AUTO, BEGIN, BREAK, CASE, CATCH, CLASS, CONST, CONTINUE, DEFAULT, DO,  ELSE,
     ELIF, END, EXTENDS, EXTERN, FALSE, FOR , FUNC, FOREACH, FROM, IF, _IN, INCLUDE, IS,
     LOCAL, NIL, NOT, OR, PROC, PRIVATE, PROTECTED, PUBLIC, REGISTER, REQUIRE,
     RETURN,REPEAT, STEP, STATIC, SWITCH, THROW, TRUE, THEN, TRY, TO, TYPE, UNTIL, USE,
-    VAR,  VOLATILE, WHILE, WITH, XOR,
+    VAR,  VOLATILE, WHILE, WITH, XOR, OF,
 
     /* types */
     ARRAY, STRUCT, ENUM,
@@ -50,10 +52,10 @@ static const tToken Tokens[] =
     {BEGIN, "begin"},
     {BREAK, "break"},
     //{CASE, "case"},
-    {CATCH, "catch"},
+    //{CATCH, "catch"},
     {CDEF, "cdef"},
     {CIMPORT, "cimport"},
-    {CLASS, "class"},
+    //{CLASS, "class"},
     {CONST, "const"},
     {CONTINUE, "continue"},
     //{DEFAULT, "default"},
@@ -63,7 +65,7 @@ static const tToken Tokens[] =
     {END, "end"},
     {ENUM, "enum"},
     //{EXTENDS, "extends"},
-    {EXTERN, "extern"},
+    //{EXTERN, "extern"},
     {FALSE, "false"},
     {FOR, "for"},
     {FUNC, "func"},
@@ -100,6 +102,7 @@ static const tToken Tokens[] =
     {WHILE, "while"},
     //{WITH, "with"},
     {XOR, "xor"},
+    {OF, "of"},
     {TRIPLEDOT, "..."},
     {DOUBLEDOT, ".."},
     {INC, "++"},

@@ -44,7 +44,7 @@ char* readfile(const char* fname)
     if (fp == NULL)
     {
         free(buf);
-        eve_custom_error(EVE_UNABLE_TO_READ_FILE, "Error: Unable to read file \"%s\".", fname);
+        eve_custom_error(EVE_UNABLE_TO_READ_FILE, "Unable to read file \"%s\".", fname);
     }
     fread(buf, sizeof(char), flen, fp);
     fclose(fp);
@@ -62,19 +62,19 @@ char * extract_name(char * src)
         tmp[i] = src[i];
     }
     tmp[i] ='\0';
-    #ifdef _WIN32
-      strcat(tmp, ".exe");
-    #endif
+#ifdef _WIN32
+    strcat(tmp, ".exe");
+#endif
     return tmp;
 }
 
 char dir_sep()
 {
-    #ifdef _WIN32
-        return '\\';
-    #else
-        return '/';
-    #endif
+#ifdef _WIN32
+    return '\\';
+#else
+    return '/';
+#endif
 }
 
 char * extract_dir(char * src)

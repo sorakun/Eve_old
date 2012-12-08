@@ -25,12 +25,12 @@ void eve_compile(char * file, int argc, char ** argv)
     /* if tcclib.h and libtcc1.a are not installed, where can we find them */
     tcc_add_sysinclude_path(s, "./clib");
 
-    #ifdef _WIN32
+#ifdef _WIN32
     tcc_set_lib_path(s, "runtime_lib");
     tcc_add_library_path(s, "runtime_lib");
     tcc_add_library(s, "libtcc1");
     tcc_add_library(s, "user32");
-    #endif
+#endif
 
 //    if(eve_enable_debug == 1)
 //       tcc_enable_debug(s);
@@ -43,23 +43,23 @@ void eve_compile(char * file, int argc, char ** argv)
     if (argc == 2 && !memcmp(argv[1], "lib_path=",9))
         tcc_set_lib_path(s, argv[1]+9);
 
-    /* MUST BE CALLED before any compilation */
 
     if (tcc_compile_string(s, readfile(file)) == -1)
         return 1;
     switch (buildmode)
     {
-        case 0:
-          tcc_set_output_type(s, output_type);
-          tcc_output_file(s, compiled_file);
-          break;
+    case 0:
+        // compile
+        tcc_set_output_type(s, output_type);
+        tcc_output_file(s, compiled_file);
+        break;
 
-        case 1:
-          tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
-          tcc_run(s, argc, argv);
-          break;
+    case 1:
+        // run
+        tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
+        tcc_run(s, argc, argv);
+        break;
     }
-
-    //tcc_delete(s);
+    tcc_delete(s);
     return 0;
 }

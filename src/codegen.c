@@ -1,6 +1,6 @@
 /*
  * Eve programming language
- * Code generator
+ * C Code generator
  * check eve.h for copyright informations
  */
 
@@ -30,15 +30,19 @@ string get_token_str(token_node token)
         return "^";
     case '@':
         return "&";
+    case '^':
+        return "*";
     case ELIF:
         return "else if";
+    case NIL:
+        return "NULL";
     default:
         return token.str;
     }
 }
 
 /* EOS = END OF STATEMENT */
-void outputnode(tStatementNode*node, int EOS)
+void outputnode(tStatementNode * node, int EOS)
 {
 
     int i=0;
@@ -48,23 +52,37 @@ void outputnode(tStatementNode*node, int EOS)
         fprintf(out, "%s(", node->type.str);
         for (i=0; i<node->acount; i++)
         {
-            //printf("param %d of %s is %s\n", i, node->type.str, node->args[i]->type.str);
+            debugf("param %d of %s is %s\n", i, node->type.str, node->args[i]->type.str);
             outputnode(node->args[i],  0);
             if (i+1 < node->acount)
                 fprintf(out, ", ");
         }
         fprintf(out, ")", node->type.str);
     }
-
+    else if (node->type.TT == BEGIN)
+    {
+        fprintf(out, "{\n");
+        gen_code_func(node->thread);
+        fprintf(out, "\n}\n");
+    }
     else if (node->type.TT == IF || node->type.TT == ELIF || node->type.TT == ELSE)
     {
+
         fprintf(out, "%s", get_token_str(node->type));
+        /* <ifstatement> ::= <if>"(" <condition> ")" "{" <instruction> "}"
+                           | <ifstatement> <else if>"(" <condition> ")" "{" <instruction> "}"
+                           | <else> "{" <instruction> "}"
+        */
         if (node->type.TT != ELSE)
+        {
+            fprintf(out, " ( ");
             outputnode(node->condition,  0);
+            fprintf(out, " ) ");
+        }
+
         fprintf(out, "\n{\n");
         EOS = 0;
-        for (i=0; i < node->thread->icount; i++)
-            outputnode(node->thread->instructions[i],  1);
+        gen_code_func(node->thread);
         fprintf(out, "}\n");
     }
     else if (node->type.TT == FOR)
@@ -73,12 +91,11 @@ void outputnode(tStatementNode*node, int EOS)
         outputnode(node->from, 0);
         fprintf(out, ";");
         outputnode(node->from->left, 0);
-        fprintf(out, "<=");
+        fprintf(out, "!=");
         outputnode(node->to, 0);
         fprintf(out, ";");
         fprintf(out, "%s ++)\n{\n", node->from->left->type.str);
-        for (i=0; i < node->thread->icount; i++)
-            outputnode(node->thread->instructions[i],  1);
+        gen_code_func(node->thread);
         fprintf(out, "}\n");
     }
     else if (node->type.TT == WHILE)
@@ -86,15 +103,13 @@ void outputnode(tStatementNode*node, int EOS)
         fprintf(out, "while (");
         outputnode(node->condition, 0);
         fprintf(out, ")\n{\n");
-        for (i=0; i < node->thread->icount; i++)
-            outputnode(node->thread->instructions[i],  1);
+        gen_code_func(node->thread);
         fprintf(out, "}\n");
     }
     else if (node->type.TT == REPEAT)
     {
         fprintf(out, "do {\n");
-        for (i=0; i < node->thread->icount; i++)
-            outputnode(node->thread->instructions[i],  1);
+        gen_code_func(node->thread);
         fprintf(out, "}\n");
         fprintf(out, "while(!(");
         outputnode(node->condition, 0);
@@ -104,7 +119,7 @@ void outputnode(tStatementNode*node, int EOS)
     {
         fprintf(out, "return ");
         if(node->unary!=NULL)
-          outputnode(node->unary, 0);
+            outputnode(node->unary, 0);
         //fprintf(out, "");
     }
     else if (node->type.TT == BREAK || node->type.TT == CONTINUE)
@@ -113,8 +128,9 @@ void outputnode(tStatementNode*node, int EOS)
     }
     else if (token_is_op(node->type))
     {
+        debugf("[codegen]: node %s is operation.\n", node->type.str);
         fprintf(out, "(");
-        if (op_is_unary(node->type) || ((node->type.TT == '-' ) && (node->left == NULL)))
+        if (op_is_unary(node->type) && (node->left == NULL))
         {
             debugf("[codegen]: op %s is unary\n", node->type.str);
             fprintf(out, " %s ", get_token_str(node->type));
@@ -122,9 +138,18 @@ void outputnode(tStatementNode*node, int EOS)
         }
         else
         {
-            if(node->type.TT == '+')
+            /* special tokens, like index ":" or addintion for string, or string multiplication, etc ... */
+            if(node->type.TT == ':')
             {
-                if(strcmp(get_type_of(node->left, node->parent), "str") == 0)
+                outputnode(node->left,  0);
+                fprintf(out, " [ ");
+                outputnode(node->right,  0);
+                fprintf(out, " ] ");
+            }
+
+            else if(node->type.TT == '+')
+            {
+                if(strcmp(get_op_type(node->left, node->parent_thread), "str") == 0)
                 {
                     // Right token is automatically a string
 
@@ -132,6 +157,37 @@ void outputnode(tStatementNode*node, int EOS)
                     outputnode(node->left,  0);
                     fprintf(out, ", ");
                     outputnode(node->right,  0);
+                    fprintf(out, ")");
+                }
+                else
+                {
+                    outputnode(node->left,  0);
+                    fprintf(out, " %s ", get_token_str(node->type));
+                    outputnode(node->right,  0);
+                }
+            }
+            else if (node->type.TT == '*')
+            {
+                int left_is_string = (strcmp(get_op_type(node->left, node->parent_thread), "str") == 0);
+                if ((left_is_string) ||
+                    (strcmp(get_op_type(node->right, node->parent_thread), "str") == 0))
+                {
+                    //check which node is the string:
+                    fprintf(out, "repstr(");
+
+                    if(left_is_string)
+                    {
+                        outputnode(node->left,  0);
+                        fprintf(out, ", ");
+                        outputnode(node->right,  0);
+                    }
+                    else
+                    {
+                        outputnode(node->right,  0);
+                        fprintf(out, ", ");
+                        outputnode(node->left,  0);
+                    }
+
                     fprintf(out, ")");
                 }
                 else
@@ -151,10 +207,10 @@ void outputnode(tStatementNode*node, int EOS)
         fprintf(out, ")");
     }
     else
-        fprintf(out, " %s ", node->type.str);
+        fprintf(out, " %s ", get_token_str(node->type));
 
     if (EOS == 1)
-        fprintf(out, ";\n", node->type.str);
+        fprintf(out, ";\n", get_token_str(node->type));
 }
 
 void generate_function(tThread * func)
@@ -168,7 +224,7 @@ void generate_function(tThread * func)
             fprintf(out, ", ");
     }
     if(func->unlimited_args)
-       fprintf(out, "...");
+        fprintf(out, "...");
     fprintf(out, ")\n{\n");
     gen_code_func(func);
     fprintf(out, "}\n");
@@ -208,21 +264,16 @@ string gen_code(string file, tThread * main)
     string ext = strdup(".c");
     strcat(fname, ext);
     out= fopen(fname, "w");
-
-    for(i=0;i<included_files_count;i++)
+    fprintf(out, "#include <eve.h>\n#include <stdlib.h>\n#include <string.h>\n");
+    for(i=0; i<included_files_count; i++)
     {
         fprintf(out, "#include <%s.h>\n", included_files[i]);
     }
 
-    fprintf(out, "#define str char*\n");
-    fprintf(out, "#define bool unsigned short int\n");
-    fprintf(out, "#define false 0\n");
-    fprintf(out, "#define true  1\n");
-
-    // generatin types
+    // generating types
     for (i = BASIC_TYPES_COUNT; i<global_types_count; i++)
     {
-        if(global_types[i].type_kind == __none)
+        if((global_types[i].type_kind == __none) || (global_types[i].type_kind == __array))
         {
             fprintf(out, "typedef %s ", global_types[i].pointerto);
             if(global_types[i].pointer)
@@ -230,6 +281,16 @@ string gen_code(string file, tThread * main)
                 fprintf(out, " *");
             }
             fprintf(out, " %s;\n", global_types[i].name);
+        }
+        else if (global_types[i].type_kind == __enum)
+        {
+            fprintf(out, "typedef enum %s{\n", global_types[i].name);
+            int j = 0;
+            for(; j<global_types[i].ecount; j++)
+            {
+                fprintf(out, "%s, ", global_types[i].enums[j]);
+            }
+            fprintf(out, "\n}%s;\n", global_types[i].name);
         }
     }
 

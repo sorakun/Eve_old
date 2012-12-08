@@ -41,12 +41,15 @@ int var_is_defined(string name, tThread * thread, int check_parent)
     if((thread->parent != NULL ) && (check_parent == 1))
         return var_is_defined(name, thread->parent, 1);
     else
+    {
+        debugf("Var %s not defined.\n", name);
         return 0;
+    }
 }
 
 void register_variable(string name, string type, int pointer, tMod mod, tThread * thread)
 {
-    debugf("[register_variable]registring variable %s at pos %d\n", name, thread->vcount);
+    debugf("[register_variable]registring variable %s type %s at pos %d\n", name, type, thread->vcount);
     thread->vars = (tVar*)eve_realloc(thread->vars, (thread->vcount+1) * sizeof(tVar));
     thread->vars[thread->vcount].name = strdup(name);
     thread->vars[thread->vcount].type = type;
@@ -60,13 +63,13 @@ tVar find_variable(string name, tThread * thread)
     int i;
     for (i = 0; i < thread->vcount; i++)
     {
-        debugf("[varisdefined]:comparing %s with %s\n", name, thread->vars[i].name);
+        debugf("[find_variable]:comparing %s with %s\n", name, thread->vars[i].name);
         if (strcmp(name, thread->vars[i].name) == 0)
             return thread->vars[i];
     }
     for (i = 0; i < thread->pcount; i++)
     {
-        debugf("[varisdefined]:comparing %s with %s\n", name, thread->params[i].name);
+        debugf("[find_variable]:comparing %s with %s\n", name, thread->params[i].name);
         if (strcmp(name, thread->params[i].name) == 0)
             return thread->params[i];
     }
