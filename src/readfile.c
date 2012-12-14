@@ -1,6 +1,6 @@
 /*
  * Eve programming language
- * File io utilities
+ * File io and other utilities
  * check eve.h for copyright informations
  */
 
@@ -103,3 +103,4 @@ int file_exists(const char * filename)
     }
     return 0;
 }
+

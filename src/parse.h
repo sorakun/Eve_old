@@ -21,6 +21,8 @@ typedef enum tBasicType
 } tBasicType;
 
 struct tType;
+struct tThread;
+struct tVar;
 
 typedef struct tField
 {
@@ -28,10 +30,25 @@ typedef struct tField
     struct tType * type;
 } tField;
 
+
+
 typedef enum tType_kind
 {
-    __array, __enum, __class, __none, __struct
+    __array, __enum, __class, __none, __struct, __pclass, // pointer to class
 } tType_kind;
+
+typedef struct class_
+{
+    char * name;
+    // the name of the pointer to this class ex: class Player; pointer_name = PPlayer = ^ Player.
+    char * pointer_name;
+    string type; // list of types, for templates
+    int key_index; // is the key variable already defined
+    struct tVar * variables;
+    int vcount; // number of variables
+    struct tThread ** methodes;
+    int mcount; // number of methods
+}class_;
 
 typedef struct tType
 {
@@ -49,7 +66,9 @@ typedef struct tType
     // methods in case of class
     // TODO.
     int pointer; // is it a pointer?
-    string pointerto;
+    char * pointerto;
+
+    class_ class_info;
 } tType;
 
 typedef struct tVar
@@ -82,12 +101,16 @@ typedef struct tStatementNode
     struct tStatementNode * parent;
 
     int acount; // # of arguments
+
+    int member_func; // if = 1, it's a func, if 0 it's a variable. (for OOP)
+    string gen_name;
 } tStatementNode;
 
 typedef struct tThread
 {
     int cdef;
     string name; // name is case of proc/func
+    string gen_name; // name of the generated func (OOP)
     tThreadType type;
     string return_type; // a function's returning type
     tStatementNode ** instructions;
@@ -103,6 +126,7 @@ typedef struct tThread
     int if_coumpound; // # of compound if-elif-else
 
     struct tThread * parent; // a link  between a thread inside an instruction, and the parent thread.
+    class_ * parent_class; // parent class, to find member variables.
 } tThread;
 
 int global_types_count;

@@ -31,6 +31,7 @@ tThread * create_thread(tThreadType type, tThread * parent, string name, string 
     tThread * thread = (tThread*)eve_malloc(sizeof(tThread));
     thread->parent = parent;
     thread->name = dupstr(name);
+    thread->gen_name = NULL;
     thread->type = type;
     thread->return_type = dupstr(return_type);
     thread->global_types = global_types;
@@ -43,6 +44,7 @@ tThread * create_thread(tThreadType type, tThread * parent, string name, string 
     thread->vars = (tVar*)eve_malloc(sizeof(tVar));
     thread->if_coumpound = 0;
     thread->cdef = cdef;
+    thread->parent_class = NULL;
 
     thread->body_defined = body_defined;
     thread->unlimited_args = unlimited_args;

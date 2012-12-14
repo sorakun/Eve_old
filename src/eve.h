@@ -71,10 +71,13 @@ FILE * debug_file;
 
 string compile_file;
 string compiled_file;
+string compiled_header;
 
 int eve_enable_debug; /* still not working */
 int eve_enable_warning;
 int buildmode;   /* 0: Compile, 1: Run */
 int output_type; /* 1 executable, 2 dynamic library, 3 object file */
+
+size_t allocated_mem;
 
 #endif

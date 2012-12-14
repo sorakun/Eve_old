@@ -26,4 +26,6 @@ string mod_to_str(tMod mod);
 
 string find_type_pointerto(tType typ);
 
+tType find_type_root(tType type);
+
 #endif

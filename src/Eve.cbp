@@ -50,6 +50,9 @@ Enjoy forking Eve!]]>
 		<Compiler>
 			<Add option="-g" />
 		</Compiler>
+		<Unit filename="classes.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="codegen.c">
 			<Option compilerVar="CC" />
 		</Unit>

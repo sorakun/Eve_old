@@ -71,6 +71,7 @@ void parse_cmds(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+    allocated_mem = 0;
     int i;
     init_debugger(argv[1]);
     for (i = 0; i < argc; i++)
@@ -94,5 +95,6 @@ int main(int argc, char **argv)
     debugf("parsing ended successfully.\n");
     string src = strdup(gen_code(compile_file, global_thread));
     eve_compile(src, argc, argv);
+    debugf("\nExecution Ended.\nTotal allocated memory: %d\n", allocated_mem);
     return 0;
 }

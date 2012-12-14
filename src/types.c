@@ -57,6 +57,7 @@ void add_basic_type(const string name, tBasicType BasicType, int maxsize, tField
 
 void register_type(tType type)
 {
+    debugf("registering type %s %d\n", type.name, type.pointer);
     global_types = (tType*)realloc(global_types, (global_types_count+1)*sizeof(tType));
     global_types[global_types_count] = type;
     global_types_count++;
@@ -79,7 +80,7 @@ tType find_type(string name)
     int i;
     for (i = 0; i < global_types_count; i++)
     {
-        debugf("[find_type]:comparing %s with %s\n", name, global_types[i].name);
+        //debugf("[find_type]:comparing %s with %s\n", name, global_types[i].name);
         if (strcmp(name, global_types[i].name) == 0)
             return global_types[i];
     }
@@ -106,6 +107,23 @@ string find_type_pointerto(tType typ)
         return find_type_pointerto(tmp);
     else
         return tmp.name;
+
+}
+
+tType find_type_root(tType type)
+{
+    tType tmp = type;
+    int p_level = 0; // pointer level
+    while(tmp.pointerto != NULL)
+    {
+        if(tmp.pointer == 1)
+            p_level++;
+
+        tmp = find_type(tmp.pointerto);
+    }
+    tmp.pointerto = p_level;
+    debugf("type: %d %s\n", p_level, tmp.name);
+    return tmp;
 
 }
 

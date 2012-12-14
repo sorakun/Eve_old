@@ -137,6 +137,16 @@ token_node Lex_Step(LexInfo * li)
             li->pos+=2;
             li->line_pos+=2;
         }
+        // ->
+        if(li->input[li->pos+1] == '>')
+        {
+            tmp.str = (string)eve_realloc(tmp.str, 3*sizeof(char));
+            tmp.str[0] = '-';
+            tmp.str[1] = '>';
+            size = 2;
+            li->pos+=2;
+            li->line_pos+=2;
+        }
         // -=
         else if(li->input[li->pos+1] == '=')
         {
@@ -398,7 +408,7 @@ token_node Lex_Step(LexInfo * li)
     }
 
     // alpha, it's keyword or identifier
-    else if(isalpha(li->input[li->pos]))
+    else if(isalpha(li->input[li->pos]) || li->input[li->pos] == '_')
     {
         while((isalnum(li->input[li->pos]) || li->input[li->pos] == '_' ) && (li->pos <= strlen(li->input)-1))
         {

@@ -13,8 +13,11 @@
 #include "lex.h"
 #include "parse.h"
 #include "includes.h"
+#include "types.h"
+
 
 FILE * out;
+FILE * hout;
 
 string get_token_str(token_node token)
 {
@@ -170,7 +173,7 @@ void outputnode(tStatementNode * node, int EOS)
             {
                 int left_is_string = (strcmp(get_op_type(node->left, node->parent_thread), "str") == 0);
                 if ((left_is_string) ||
-                    (strcmp(get_op_type(node->right, node->parent_thread), "str") == 0))
+                        (strcmp(get_op_type(node->right, node->parent_thread), "str") == 0))
                 {
                     //check which node is the string:
                     fprintf(out, "repstr(");
@@ -197,6 +200,38 @@ void outputnode(tStatementNode * node, int EOS)
                     outputnode(node->right,  0);
                 }
             }
+            else if (node->type.TT == '.')
+            {
+                debugf("output class = %d", node->right->member_func);
+                if(node->right->member_func == 0)
+                {
+                    outputnode(node->left,  0);
+                    fprintf(out, " %s ", get_token_str(node->type));
+                    outputnode(node->right,  0);
+                }
+                else
+                {
+
+                    fprintf(out, "%s (", node->right->gen_name);
+                    if(node->left->type.TT == '^')
+                    {
+                        fprintf(out, "%s", node->right->unary->type.str);
+                    }
+                    else
+                    {
+                        fprintf(out, "&%s", node->left->type.str);
+                    }
+                    if(node->right->args>1)
+                        fprintf(out, ", ");
+                    for (i=1; i<node->right->acount; i++)
+                    {
+                        outputnode(node->right->args[i],  0);
+                        if (i+1 < node->acount)
+                            fprintf(out, ", ");
+                    }
+                    fprintf(out, ")");
+                }
+            }
             else
             {
                 outputnode(node->left,  0);
@@ -213,19 +248,37 @@ void outputnode(tStatementNode * node, int EOS)
         fprintf(out, ";\n", get_token_str(node->type));
 }
 
-void generate_function(tThread * func)
+// if a = 1 generate name, else gen_name
+void generate_function(tThread * func, int a)
 {
-    fprintf(out, "%s %s (", func->return_type, func->name);
+    if (a == 1)
+    {
+        fprintf(out, "%s %s (", func->return_type, func->gen_name);
+        fprintf(hout, "%s %s (", func->return_type, func->gen_name);
+    }
+    else
+    {
+        fprintf(out, "%s %s (", func->return_type, func->name);
+        fprintf(hout, "%s %s (", func->return_type, func->name);
+    }
     int i = 0;
     for(; i<func->pcount; i++)
     {
         fprintf(out, "%s %s", func->params[i].type, func->params[i].name);
+        fprintf(hout, "%s %s", func->params[i].type, func->params[i].name);
         if (i+1 < func->pcount)
+        {
             fprintf(out, ", ");
+            fprintf(hout, ", ");
+        }
     }
     if(func->unlimited_args)
+    {
         fprintf(out, "...");
+        fprintf(hout, "...");
+    }
     fprintf(out, ")\n{\n");
+    fprintf(hout, ");\n");
     gen_code_func(func);
     fprintf(out, "}\n");
 }
@@ -260,37 +313,65 @@ void gen_code_func(tThread * func)
 string gen_code(string file, tThread * main)
 {
     int i;
-    string fname = strdup(file);
-    string ext = strdup(".c");
+    string fname  = strdup(file); //  .c
+    string fname2 = strdup(file); // .h
+    string ext  = strdup(".c");
+    string ext2 = strdup(".h");
     strcat(fname, ext);
+    strcat(fname2, ext2);
     out= fopen(fname, "w");
+    hout = fopen(fname2, "w");
+
     fprintf(out, "#include <eve.h>\n#include <stdlib.h>\n#include <string.h>\n");
     for(i=0; i<included_files_count; i++)
     {
         fprintf(out, "#include <%s.h>\n", included_files[i]);
     }
 
-    // generating types
+    fprintf(out, "#include \"%s\"\n", fname2);
+    // generating types in hout (.h)
     for (i = BASIC_TYPES_COUNT; i<global_types_count; i++)
     {
         if((global_types[i].type_kind == __none) || (global_types[i].type_kind == __array))
         {
-            fprintf(out, "typedef %s ", global_types[i].pointerto);
+            fprintf(hout, "typedef %s ", global_types[i].pointerto);
             if(global_types[i].pointer)
             {
-                fprintf(out, " *");
+                fprintf(hout, " *");
             }
-            fprintf(out, " %s;\n", global_types[i].name);
+            fprintf(hout, " %s;\n", global_types[i].name);
         }
         else if (global_types[i].type_kind == __enum)
         {
-            fprintf(out, "typedef enum %s{\n", global_types[i].name);
+            fprintf(hout, "typedef enum %s{\n", global_types[i].name);
             int j = 0;
             for(; j<global_types[i].ecount; j++)
             {
-                fprintf(out, "%s, ", global_types[i].enums[j]);
+                fprintf(hout, "%s, ", global_types[i].enums[j]);
             }
-            fprintf(out, "\n}%s;\n", global_types[i].name);
+            fprintf(hout, "\n}%s;\n", global_types[i].name);
+        }
+        else if (global_types[i].type_kind == __pclass) // next type is class, generate it automatically
+        {
+            fprintf(hout, "struct %s;\n", global_types[i+1].class_info.name);
+            // generate next type.
+            fprintf(hout, "typedef struct %s * %s;\n", global_types[i].pointerto, global_types[i].name);
+
+            fprintf(hout, "typedef struct %s{\n", global_types[i+1].class_info.name);
+            int j = 0;
+            for(; j<global_types[i+1].class_info.vcount; j++)
+            {
+                fprintf(hout, "%s %s;\n", global_types[i+1].class_info.variables[j].type, global_types[i+1].class_info.variables[j].name);
+            }
+            fprintf(hout, "\n}%s;\n", global_types[i+1].class_info.name);
+
+            for(j = 0; j < global_types[i+1].class_info.mcount; j++)
+            {
+                generate_function(global_types[i+1].class_info.methodes[j], 1);
+            }
+            // next type already generate!
+            i++;
+
         }
     }
 
@@ -307,8 +388,12 @@ string gen_code(string file, tThread * main)
     for (i=0; i < global_functions_count; i++)
     {
         if(!global_functions[i]->cdef)
-            generate_function(global_functions[i]);
+            generate_function(global_functions[i], 0);
     }
     fclose(out);
+    fclose(hout);
+    free(ext);
+    free(ext2);
+    free(fname2);
     return fname;
 }

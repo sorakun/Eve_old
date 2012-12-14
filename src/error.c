@@ -88,6 +88,14 @@ string getErrorType(int type)
         return "Wrong call of \"break\"/\"continue\"";
     case 19:
         return "Unable to read file stream.";
+    case 20:
+        return "Wrong function definition.";
+    case 21:
+        return "Key redefinition";
+    case 22:
+        return "Invalid class operand";
+    case 23:
+        return "Invalid class method";
     }
 }
 

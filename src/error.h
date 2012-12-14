@@ -28,5 +28,8 @@
 #define EVE_WRONG_CALL_OF_BREAK         18
 #define EVE_UNABLE_TO_READ_FILE         19
 #define EVE_WRONG_FUNC_DEFINITION       20
+#define EVE_KEY_REDEFINITION            21
+#define Eve_INVALID_CLASS_OPERAND       22
+#define Eve_INVALID_CLASS_METHOD        23
 
 #endif

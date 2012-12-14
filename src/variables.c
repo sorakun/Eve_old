@@ -18,7 +18,7 @@
 int var_is_defined(string name, tThread * thread, int check_parent)
 {
     int i = 0;
-    debugf("[varisdfined] in thread %s have %d variable in stack, %d variables in params\n", thread->name, thread->vcount, thread->pcount);
+   // debugf("[varisdefined] in thread %s have %d variable in stack, %d variables in params\n", thread->name, thread->vcount, thread->pcount);
     for (i = 0; i < thread->vcount; i++)
     {
         debugf("i = %d\n");
@@ -27,6 +27,12 @@ int var_is_defined(string name, tThread * thread, int check_parent)
             return 1;
     }
 
+    if (thread->parent_class != NULL)
+    {
+        debugf("[varisdefined] moving to parent class, it contains %d\n", thread->parent_class->vcount);
+        if (is_member_data(name, thread->parent_class) != -1)
+            return 1;
+    }
     debugf("[varisdefined] moving to parameters it contains %d\n", thread->pcount);
     for (i = 0; i < thread->pcount; i++)
     {
@@ -52,7 +58,7 @@ void register_variable(string name, string type, int pointer, tMod mod, tThread 
     debugf("[register_variable]registring variable %s type %s at pos %d\n", name, type, thread->vcount);
     thread->vars = (tVar*)eve_realloc(thread->vars, (thread->vcount+1) * sizeof(tVar));
     thread->vars[thread->vcount].name = strdup(name);
-    thread->vars[thread->vcount].type = type;
+    thread->vars[thread->vcount].type = strdup(type);
     thread->vars[thread->vcount].mod = mod;
     //thread->vars[thread->vcount].pointer = pointer;
     thread->vcount ++;
