@@ -206,24 +206,58 @@ void outputnode(tStatementNode * node, int EOS)
                 if(node->right->member_func == 0)
                 {
                     outputnode(node->left,  0);
-                    fprintf(out, " %s ", get_token_str(node->type));
+                    fprintf(out, " . ");
                     outputnode(node->right,  0);
                 }
                 else
                 {
 
                     fprintf(out, "%s (", node->right->gen_name);
-                    if(node->left->type.TT == '^')
-                    {
-                        fprintf(out, "%s", node->right->unary->type.str);
-                    }
-                    else
+                    if(var_is_defined(node->left->type.str, node->parent_thread, 1))
                     {
                         fprintf(out, "&%s", node->left->type.str);
                     }
+                    else
+                    {
+                         fprintf(out, " & ");
+                        outputnode(node->left, 0);
+                    }
                     if(node->right->args>1)
                         fprintf(out, ", ");
-                    for (i=1; i<node->right->acount; i++)
+                    for (i=0; i<node->right->acount; i++)
+                    {
+                        outputnode(node->right->args[i],  0);
+                        if (i+1 < node->acount)
+                            fprintf(out, ", ");
+                    }
+                    fprintf(out, ")");
+                }
+            }
+            else if (node->type.TT == DYN_CALL)
+            {
+                debugf("output class = %d", node->right->member_func);
+                if(node->right->member_func == 0)
+                {
+                    outputnode(node->left,  0);
+                    fprintf(out, " -> ");
+                    outputnode(node->right,  0);
+                }
+                else
+                {
+
+                    fprintf(out, "%s (", node->right->gen_name);
+                    if(var_is_defined(node->left->type.str, node->parent_thread, 1))
+                    {
+                        fprintf(out, "%s", node->left->type.str);
+                    }
+                    else
+                    {
+                       //  fprintf(out, " & ");
+                        outputnode(node->left, 0);
+                    }
+                    if(node->right->args>1)
+                        fprintf(out, ", ");
+                    for (i=0; i<node->right->acount; i++)
                     {
                         outputnode(node->right->args[i],  0);
                         if (i+1 < node->acount)

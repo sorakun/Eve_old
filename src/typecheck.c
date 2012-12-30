@@ -442,12 +442,15 @@ string get_op_type(tStatementNode * node, tThread * thread)
                                  node->type.pos, node->type.str);
             return type;
 
-        case '.':
+        case '.': case DYN_CALL:
         {
             string tname = get_op_type(node->left, thread);
-            debugf("type = %s\n", tname);
+            debugf("type of %s is %s\n", node->left->type.str, tname);
             tmp = find_type(tname);
-
+            if (node->type.TT == DYN_CALL)
+                if (tmp.pointer == 0)
+                    eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, left operand of operator '->' must be pointer type.",
+                                     node->type.source, node->left->type.line_num, node->left->type.pos);
             type = find_type_pointerto(tmp);
 
 
@@ -458,18 +461,19 @@ string get_op_type(tStatementNode * node, tThread * thread)
 
                 int pos = is_member_func(node->right->type.str, &tmp.class_info);
                 int pos2 = is_member_data(node->right->type.str, &tmp.class_info);
-                debugf("heuheu func:%d, data:%d\n", pos, pos2);
+                debugf("func: %d, data: %d\n", pos, pos2);
                 if(pos != -1)
                 {
                     int i = 1;
-                    if (tmp.class_info.methodes[pos]->pcount > node->acount+1)
+                    debugf("parameters match default %d got %d+1\n", tmp.class_info.methodes[pos]->pcount, node->right->acount);
+                    if (tmp.class_info.methodes[pos]->pcount > node->right->acount+1)
                         eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, parameters count of function %s is different from the definition",
-                                         node->type.source, node->type.line_num, node->type.pos, node->type.str);
+                                         node->type.source, node->right->type.line_num, node->right->type.pos, node->right->type.str);
                     if ((tmp.class_info.methodes[pos]->unlimited_args ==0) && (tmp.class_info.methodes[pos]->pcount < node->acount))
                         eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, parameters count of function %s is different from the definition",
-                                         node->type.source, node->type.line_num, node->type.pos, node->type.str);
+                                         node->right->type.source, node->right->type.line_num, node->right->type.pos, node->right->type.str);
                     for (; i< tmp.class_info.methodes[pos]->pcount; i++)
-                        match_type(node->args[i-1], tmp.class_info.methodes[pos]->params[i].type, thread);
+                        match_type(node->right->args[i-1], tmp.class_info.methodes[pos]->params[i].type, thread);
 
                     node->right->member_func = 1;
                     node->right->gen_name = strdup(tmp.class_info.methodes[pos]->gen_name);
@@ -493,8 +497,8 @@ string get_op_type(tStatementNode * node, tThread * thread)
     }
     if(func_is_defined(node->type.str))
     {
-        tThread * fn = find_func(node->type.str);
-        //debugf("func found, it's %s\n", fn->name);
+        tThread * fn = find_func(node->type.str, _func);
+
         if (fn->pcount > node->acount)
             eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, parameters count of function %s is different from the definition",
                              node->type.source, node->type.line_num, node->type.pos, node->type.str);
@@ -521,7 +525,7 @@ string get_op_type(tStatementNode * node, tThread * thread)
         eve_custom_error(EVE_INVALID_DATA_TYPE, "file: '%s', line: %d, pos: %d, Procedure %s can not be called in statements",
                          node->type.source, node->type.line_num, node->type.pos, node->type.str);
     }
-    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifier '%s' is not defined.",
+    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifiers '%s' is not defined.",
                      node->type.source, node->type.line_num, node->type.pos, node->type.str);
 }
 

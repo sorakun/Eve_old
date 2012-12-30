@@ -78,6 +78,7 @@ tThread * find_func(string name, tThreadType type)
             }
         }
     }
+    return NULL;
 }
 
 

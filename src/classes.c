@@ -41,3 +41,22 @@ int is_member_data(char * name, class_ * c)
             return pos;
     return -1;
 }
+
+/*
+ * Checks if a given string is a valid method's name
+ * returns 1 if func, 2 if proc
+ * 0 if it's invalid
+ */
+
+int is_class_func(char * name)
+{
+    int i = 0;
+    int pos = 0;
+    for(; i< global_types_count; i++)
+    {
+        if (global_types[i].type_kind == __class)
+            if(is_member_func(name, &global_types[i].class_info) != -1)
+                return 1;
+    }
+    return 0;
+}

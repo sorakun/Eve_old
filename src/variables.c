@@ -18,7 +18,7 @@
 int var_is_defined(string name, tThread * thread, int check_parent)
 {
     int i = 0;
-   // debugf("[varisdefined] in thread %s have %d variable in stack, %d variables in params\n", thread->name, thread->vcount, thread->pcount);
+    debugf("[varisdefined] in thread %s have %d variable in stack, %d variables in params\n", thread->name, thread->vcount, thread->pcount);
     for (i = 0; i < thread->vcount; i++)
     {
         debugf("i = %d\n");

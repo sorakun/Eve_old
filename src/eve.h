@@ -71,7 +71,6 @@ FILE * debug_file;
 
 string compile_file;
 string compiled_file;
-string compiled_header;
 
 int eve_enable_debug; /* still not working */
 int eve_enable_warning;

@@ -190,11 +190,11 @@ int priorityof(token_node t)
     case '=':
         return 15;
 
-    case OR:
-        return 14;
-
     case AND:
-        return 15;
+        return 13;
+
+    case OR:
+        return 12;
 
     case EQUAL:
     case NOTEQUAL:
@@ -215,6 +215,8 @@ int priorityof(token_node t)
         return 5;
 
     case '.':
+    case STATIC_CALL:
+    case DYN_CALL:
         return 4;
 
     case '-':
@@ -222,6 +224,9 @@ int priorityof(token_node t)
     case '@':
     case ':':
         return 3;
+
+    default:
+        return 0;
     }
 }
 
@@ -272,7 +277,9 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
     tmp->parent_thread = thread;
     for (; i <= end; i++)
     {
-        if(token_is_op(li->TokenInfo[i]) || func_is_defined(li->TokenInfo[i].str) || proc_is_defined(li->TokenInfo[i].str))
+        int test = is_class_func(li->TokenInfo[i].str);
+        debugf("test = %s %d\n", li->TokenInfo[i].str, test);
+        if(token_is_op(li->TokenInfo[i]) || func_is_defined(li->TokenInfo[i].str) || proc_is_defined(li->TokenInfo[i].str) || (test != 0))
         {
             // case of operation
             if(token_is_op(li->TokenInfo[i]))
@@ -295,21 +302,21 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
             }
             op_count++;
             if(min_pos == -1)
-                min_pos= i;
+                min_pos = i;
             else if(!compare_op(li->TokenInfo[min_pos], li->TokenInfo[i]))
                 min_pos = i;
         }
         else if(li->TokenInfo[i].TT == IDENTIFIER)
         {
             debugf("token %s is ID\n", li->TokenInfo[i].str);
-            if((!var_is_defined(li->TokenInfo[i].str, thread, 1)) && (!enum_is_defined(li->TokenInfo[i].str)))
+            if((!var_is_defined(li->TokenInfo[i].str, thread, 1)) && (!enum_is_defined(li->TokenInfo[i].str) && (li->TokenInfo[i-1].TT != '.') && (li->TokenInfo[i-1].TT != DYN_CALL)))
             {
-                if (li->TokenInfo[i-1].TT == '.')
+                if ((li->TokenInfo[i-1].TT == '.') ||(li->TokenInfo[i-1].TT == DYN_CALL))
                 {
                     tType t = find_type(li->TokenInfo[i-2].str);
-                    debugf("well %s\n",)
-                    if(t.type_kind != _class)
-                        eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifiers % is not a class/struct.\n",
+                    debugf("well %s\n", t.name);
+                    if(t.name == NULL)
+                        eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifiers %s is not a class/struct.\n",
                                          li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, li->TokenInfo[i-2].str);
                 }
                 else
@@ -339,7 +346,7 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
     else
     {
         debugf("[tStatement node] min prior operation is: %s %c\n",li->TokenInfo[min_pos].str, li->TokenInfo[min_pos].TT);
-        int func = 0;
+        int func = 0; int v;
         if(token_is_op(li->TokenInfo[min_pos]))
         {
             debugf("[geninstruction] op %s.\n", li->TokenInfo[start].str);
@@ -362,7 +369,8 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
             tmp->right = gen_instruction(li, min_pos+1, end, thread, tmp);
             return tmp;
         }
-        if((func = func_is_defined(li->TokenInfo[min_pos].str)) || (proc_is_defined(li->TokenInfo[min_pos].str)))
+        if((func = func_is_defined(li->TokenInfo[min_pos].str)) || (proc_is_defined(li->TokenInfo[min_pos].str)) ||
+           (0 != (v = is_class_func(li->TokenInfo[min_pos].str))))
         {
             tmp->type = li->TokenInfo[min_pos];
             if (func)
@@ -398,8 +406,9 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
 
                 }
                 while(tmp_pos2 != lex_find_token_pos(li, ')', li->size-1));
-                li->pos = tmp_pos1;
+                    li->pos = tmp_pos1;
             }
+            debugf("[geninstruction] generating parameters ended, pcount %d\n", tmp->acount) ;
             return tmp;
         }
     }
@@ -713,7 +722,7 @@ l:
             thread->icount++;
             li->pos = tmp_pos-1;
         }
-        else if(nexttoken(li)=='.')
+        else if((nexttoken(li)=='.') || (nexttoken(li)== DYN_CALL))
         {
             int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
             if(tmp_pos == -1)
@@ -728,6 +737,8 @@ l:
                                  thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
             if (thread->instructions[thread->icount]->type.TT == '=')
                 match_type(thread->instructions[thread->icount]->right, type, thread);
+            else
+                match_type(thread->instructions[thread->icount], "void", thread);
 
             thread->icount++;
             li->pos = tmp_pos;
@@ -776,13 +787,13 @@ l:
 
             li->pos = tmp_pos;
         }
-        else if(nexttoken(li)=='.')
+        else if((nexttoken(li)=='.') || (nexttoken(li)== DYN_CALL))
         {
             int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
             if(tmp_pos == -1)
                 eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-                        string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
+            string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
             tType tmp = find_type(tname);
             string type = find_type_pointerto(tmp);
             if(type == NULL)
@@ -791,6 +802,9 @@ l:
                                  thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
             if (thread->instructions[thread->icount]->type.TT == '=')
                 match_type(thread->instructions[thread->icount]->right, type, thread);
+            else
+                match_type(thread->instructions[thread->icount], "void", thread);
+
             thread->icount++;
             li->pos = tmp_pos;
         }
@@ -810,6 +824,7 @@ l:
     }
     else if (func_is_defined(currenttokenstring(li)))
     {
+        debugf("epic code is epic\n");
         int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
         eve_warning("file: '%s', line: %d, pos: %d, function \"%s\" is used as a statement, not inside an expression/instruction.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
 
@@ -817,6 +832,19 @@ l:
         if(tmp_pos == -1)
             eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
         thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+        if ((thread->instructions[thread->icount]->type.TT == '.') || (thread->instructions[thread->icount]->type.TT == DYN_CALL))
+        {
+            string tname = get_op_type(thread->instructions[thread->icount], thread);
+            tType tmp = find_type(tname);
+            string type = find_type_pointerto(tmp);
+            if(type == NULL)
+                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                                 li->source, thread->instructions[thread->icount]->left->type.line_num,
+                                 thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+
+            match_type(thread->instructions[thread->icount], type, thread);
+        }
+
         thread->icount++;
         li->pos = tmp_pos;
     }
@@ -835,7 +863,7 @@ l:
 void parse_args(LexInfo * li, tVar * args, int * count, int * u_args)
 {
     string tmpType, tmpName;
-    args = (tVar*)eve_malloc(sizeof(tVar));
+    //args = (tVar*)eve_malloc(sizeof(tVar));
 l:
     {
         tMod tmpmod = _none;
@@ -847,6 +875,7 @@ l:
         else
         {
             (*count)++;
+            debugf("count = %d\n", *count);
             if (is_mod(li->TokenInfo[li->pos]))
             {
                 if (currenttoken(li) == VAR)
@@ -866,11 +895,11 @@ l:
             if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
             {
                 tmpName = currenttokenstring(li);
-                debugf("current name = %s\n", currenttokenstring(li));
+                debugf("current name := %d : %s\n", *(count)-1, currenttokenstring(li));
                 args = (tVar*)eve_realloc(args, (*count)*sizeof(tVar));
                 args[*(count)-1].mod = tmpmod;
-                args[*(count)-1].name = currenttokenstring(li);
-                args[*(count)-1].type = tmpType;
+                args[*(count)-1].name = strdup(currenttokenstring(li));
+                args[*(count)-1].type = strdup(tmpType);
             }
             if(nexttoken(li) == ',')
             {
@@ -922,7 +951,52 @@ void dofunction(LexInfo * li, tThread * thread)
     int unlimited_args = 0;
     if (currenttoken(li) == '(')
     {
-        parse_args(li, args, &count, &unlimited_args);
+         string tmpType, tmpName;
+         args = (tVar*)eve_malloc(sizeof(tVar));
+l:
+        {
+            tMod tmpmod = _none;
+            lexstep(li);
+            if(currenttoken(li) == TRIPLEDOT)
+            {
+                unlimited_args=1;
+            }
+            else
+            {
+                count++;
+                debugf("count = %d\n", count);
+                if (is_mod(li->TokenInfo[li->pos]))
+                {
+                    if (currenttoken(li) == VAR)
+                        tmpmod = _var;
+                    else if (currenttoken(li) == CONST)
+                        tmpmod = _const;
+                    else
+                        eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                    lexstep(li);
+                    match(li, IDENTIFIER);
+                }
+                if (!type_is_defined(currenttokenstring(li)))
+                    eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                tmpType = strdup(currenttokenstring(li));
+                lexstep(li);
+                match(li, IDENTIFIER);
+                if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
+                {
+                    tmpName = currenttokenstring(li);
+                    debugf("current name := %d : %s\n", (count)-1, currenttokenstring(li));
+                    args = (tVar*)eve_realloc(args, (count)*sizeof(tVar));
+                    args[count-1].mod = tmpmod;
+                    args[count-1].name = strdup(currenttokenstring(li));
+                    args[count-1].type = strdup(tmpType);
+                }
+                if(nexttoken(li) == ',')
+                {
+                    lexstep(li);
+                    goto l;
+                }
+            }
+        }
         lexstep(li);
         match(li, ')');
         lexstep(li);
@@ -1371,22 +1445,74 @@ void doclassfunc(LexInfo * li,tThread * thread, class_ * c)
     strcat(func_name, "_");
     strcat(func_name, real_name);
     tVar * args = (tVar*)eve_malloc(sizeof(tVar));
-    args[0].name = strdup("self");
-    args[0].type = strdup(c->pointer_name);
-
     int count = 1;
     // first arg is self.
     lexstep(li);
     int u_args = 0;
     if (currenttoken(li) == '(')
     {
-        parse_args(li, args, &count, &u_args);
+        string tmpType, tmpName;
+l:
+        {
+            tMod tmpmod = _none;
+            lexstep(li);
+            if(currenttoken(li) == TRIPLEDOT)
+            {
+                u_args=1;
+            }
+            else
+            {
+                count++;
+                debugf("count = %d\n", count);
+                if (is_mod(li->TokenInfo[li->pos]))
+                {
+                    if (currenttoken(li) == VAR)
+                        tmpmod = _var;
+                    else if (currenttoken(li) == CONST)
+                        tmpmod = _const;
+                    else
+                        eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                    lexstep(li);
+                    match(li, IDENTIFIER);
+                }
+                if (!type_is_defined(currenttokenstring(li)))
+                    eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                tmpType = strdup(currenttokenstring(li));
+                lexstep(li);
+                match(li, IDENTIFIER);
+                if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
+                {
+                    tmpName = currenttokenstring(li);
+                    debugf("current name := %d : %s\n", (count)-1, currenttokenstring(li));
+                    args = (tVar*)eve_realloc(args, (count)*sizeof(tVar));
+                    args[count-1].mod = tmpmod;
+                    args[count-1].name = strdup(currenttokenstring(li));
+                    args[count-1].type = strdup(tmpType);
+                }
+                if(nexttoken(li) == ',')
+                {
+                    lexstep(li);
+                    goto l;
+                }
+            }
+        }
         lexstep(li);
         match(li, ')');
         lexstep(li);
     }
+
+    args[0].name = strdup("self");
+    args[0].type = strdup(c->pointer_name);
+
+    int i = 0;
+    debugf("arguments of func %s:\n", func_name);
+    for (; i<count; i++)
+    {
+        debugf("arg #%d: %s, type %s.\n", i, args[i].name, args[i].type);
+    }
+
     // registering thread
-    debugf("saving class func %s as %s\n", real_name, func_name);
+    debugf("saving class func %s as %s, param count : %d\n", real_name, func_name, count);
     c->methodes = (tThread**)eve_realloc(c->methodes, (c->mcount+1)*sizeof(tThread*));
     c->methodes[c->mcount] = create_thread(_func, thread, real_name, func_type, args, count, 0, u_args, 0);
     c->methodes[c->mcount]->gen_name = strdup(func_name);
@@ -1419,7 +1545,51 @@ void doclassproc(LexInfo * li,tThread * thread, class_ * c)
     int u_args = 0;
     if (currenttoken(li) == '(')
     {
-        parse_args(li, args, &count, &u_args);
+        string tmpType, tmpName;
+l:
+        {
+            tMod tmpmod = _none;
+            lexstep(li);
+            if(currenttoken(li) == TRIPLEDOT)
+            {
+                u_args=1;
+            }
+            else
+            {
+                count++;
+                debugf("count = %d\n", count);
+                if (is_mod(li->TokenInfo[li->pos]))
+                {
+                    if (currenttoken(li) == VAR)
+                        tmpmod = _var;
+                    else if (currenttoken(li) == CONST)
+                        tmpmod = _const;
+                    else
+                        eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                    lexstep(li);
+                    match(li, IDENTIFIER);
+                }
+                if (!type_is_defined(currenttokenstring(li)))
+                    eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                tmpType = strdup(currenttokenstring(li));
+                lexstep(li);
+                match(li, IDENTIFIER);
+                if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
+                {
+                    tmpName = currenttokenstring(li);
+                    debugf("current name := %d : %s\n", (count)-1, currenttokenstring(li));
+                    args = (tVar*)eve_realloc(args, (count)*sizeof(tVar));
+                    args[count-1].mod = tmpmod;
+                    args[count-1].name = strdup(currenttokenstring(li));
+                    args[count-1].type = strdup(tmpType);
+                }
+                if(nexttoken(li) == ',')
+                {
+                    lexstep(li);
+                    goto l;
+                }
+            }
+        }
         lexstep(li);
         match(li, ')');
         lexstep(li);
@@ -1550,18 +1720,18 @@ void doclass(LexInfo * li, tThread * thread)
     {
         switch(currenttoken(li))
         {
-            case FUNC:
-                doclassfunc(li, thread, &c);
-                break;
-            case PROC:
-                doclassproc(li, thread, &c);
-                break;
-            case TYPE:
-                doclasstype(li, thread, &c);
-                break;
-            default:
-                doclassvar(li, thread, &c);
-                break;
+        case FUNC:
+            doclassfunc(li, thread, &c);
+            break;
+        case PROC:
+            doclassproc(li, thread, &c);
+            break;
+        case TYPE:
+            doclasstype(li, thread, &c);
+            break;
+        default:
+            doclassvar(li, thread, &c);
+            break;
         }
         myclass.class_info = c;
         global_types[tmp_index] = myclass;
