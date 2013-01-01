@@ -2,3 +2,6 @@
 
 cdef proc printf from stdio; # This will include stdio.h, no need to do repeat it.
 cdef proc scanf;
+
+#windows specific
+cdef func char getch from conio;

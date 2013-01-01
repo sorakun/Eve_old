@@ -1,0 +1,11 @@
+
+cdef proc printf from stdio;
+cdef proc scanf;
+
+cimport "clib/strlib.c";
+
+func int main
+	int x = 3+2-1;
+	scanf("%d", @x);
+	printf("x = %d\n", x);
+end

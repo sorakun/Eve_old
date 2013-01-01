@@ -1,0 +1,20 @@
+#functions test
+
+import io, types;
+
+func int getint(int z);
+
+proc print_int(int x)
+	printf("%d", x);
+end
+
+func int main
+	printf("x = %d\n",  getint(2));
+	print_int(200);
+	return 0;
+end
+
+func int getint(int z)
+	printf("Hello, WOrld!\n");
+	return 20;
+end

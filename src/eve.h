@@ -34,6 +34,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * ********************************************************************************************
+ *
+ * For something as essential as git one would should write the classes and method from scratch
+ * in order to ensure encapsulation, manageability, modularity, and last but not least maintain
+ * ability. These are key factors in software engineering.
+ *
  */
 
 #ifndef EVE_EVE_H
@@ -43,7 +49,7 @@
 
 #define string char *
 
-#define EVE_DEBUG
+//#define EVE_DEBUG
 
 #ifdef EVE_DEBUG
 #define debugf debug

@@ -1,0 +1,34 @@
+#Hello, world!
+
+import io, types;
+
+type color is enum
+  red, pink, yellow
+end
+
+type color2 is enum
+  blue, black, green
+end
+
+func int main
+	color col;
+	int x;
+	
+	scanf("%d", @x);
+	
+	if  x == 1 then
+		col = red;
+	elif x == 2 then
+		col = pink;
+	else 
+		col = yellow;
+	end
+	
+	if col == yellow then
+		printf("col = Yellow\n");
+	elif col == red then
+		printf("col = red\n");
+	elif col == pink then
+		printf("col = pink\n");
+	end
+end

@@ -3,23 +3,22 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="Eve programming language" />
+		<Option makefile="makefile" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Option show_notes="0">
 			<notes>
 				<![CDATA[Eve programming language's source code.
 
-Inorder to compile Eve correctly, you need to download and compile Tiny C Compiler (tcc), compile it, and then add the dir of "tcclib.h" to the compiler search directory, and link "libtcc.a" to the project.
-
-Enjoy forking Eve!]]>
+Inorder to compile Eve correctly, you need to download and compile Tiny C Compiler (tcc), compile it, and then add the dir of "tcclib.h" to the compiler search directory, and link "libtcc.a" to the project.]]>
 			</notes>
 		</Option>
 		<Build>
 			<Target title="Linux_86bit">
 				<Option platforms="Unix;" />
-				<Option output="..\bin\eve" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="..\bin\" />
-				<Option object_output="..\obj\bin\Debug\" />
+				<Option output="../bin/eve" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../bin/" />
+				<Option object_output="../obj/bin/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -27,23 +26,22 @@ Enjoy forking Eve!]]>
 				</Compiler>
 				<Linker>
 					<Add option="-ldl" />
-					<Add option="-ltcc" />
 				</Linker>
 			</Target>
 			<Target title="Win_32bit">
 				<Option platforms="Windows;" />
-				<Option output="..\bin\eve" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="..\bin" />
-				<Option object_output="..\obj\bin\Debug\" />
+				<Option output="../bin/eve" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../bin" />
+				<Option object_output="../obj/bin/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option use_console_runner="0" />
+				<Option parameters="-r main.eve" />
 				<Compiler>
 					<Add option="-g" />
-					<Add directory="..\..\tcc-0.9.25\win32\libtcc" />
+					<Add directory="../../tcc-0.9.25/win32/libtcc" />
 				</Compiler>
 				<Linker>
-					<Add library="..\..\tcc-0.9.25\win32\libtcc\libtcc.a" />
+					<Add library="libtcc.a" />
 				</Linker>
 			</Target>
 		</Build>
@@ -56,6 +54,7 @@ Enjoy forking Eve!]]>
 		<Unit filename="codegen.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="codegen.h" />
 		<Unit filename="compiler.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -113,6 +112,15 @@ Enjoy forking Eve!]]>
 			<wxsmith version="1">
 				<gui name="wxWidgets" src="" main="" init_handlers="necessary" language="CPP" />
 			</wxsmith>
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

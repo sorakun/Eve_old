@@ -10,6 +10,7 @@
 
 #include "eve.h"
 #include "error.h"
+#include "memory.h"
 
 long flengthh(FILE* file)
 {
@@ -38,7 +39,7 @@ char* readfile(const char* fname)
     char* buf;
     FILE* fp;
     int flen = flength(fname);
-    if ((buf=calloc(flen+1, sizeof(char))) == NULL)
+    if ((buf=eve_calloc(flen+1, sizeof(char))) == NULL)
         return NULL;
     fp = fopen(fname, "rb");
     if (fp == NULL)
@@ -54,11 +55,11 @@ char* readfile(const char* fname)
 
 char * extract_name(char * src)
 {
-    char * tmp = (char*)malloc(sizeof(char));
+    char * tmp = (char*)eve_malloc(sizeof(char));
     int i =0;
     for (; i<strlen(src) && src[i] != '.'; i++)
     {
-        tmp = (char*)realloc(tmp, (i+1)*sizeof(char));
+        tmp = (char*)eve_realloc(tmp, (i+1)*sizeof(char));
         tmp[i] = src[i];
     }
     tmp[i] ='\0';
@@ -95,12 +96,22 @@ char * extract_dir(char * src)
 
 int file_exists(const char * filename)
 {
-    FILE * file;
-    if (file = fopen(filename, "r"))
+    FILE * file = NULL;
+    if ((file = fopen(filename, "r")) != NULL)
     {
-        fclose(file);
+        debugf("files exists\n");
+        //fclose(file);
         return 1;
     }
     return 0;
 }
 
+#ifndef POSIX
+string strdup(const string src)
+{
+    char * p = malloc(strlen(src) + 1);
+    if (p != NULL)
+        strcpy(p, src);
+    return p;
+}
+#endif

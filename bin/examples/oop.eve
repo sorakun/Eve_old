@@ -1,0 +1,25 @@
+
+import io, types;
+
+func int cool
+	return 4;
+end
+
+class epic
+	int value;
+	float size;
+	str name;
+
+        #__pepic x;
+
+end
+
+func int main
+	epic val;
+
+	int x = 3;
+	int z = x;
+	printf("call main. %d %d\n", x, z);
+	return 0;
+	
+end	

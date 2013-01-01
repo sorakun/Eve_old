@@ -190,7 +190,7 @@ token_node Lex_Step(LexInfo * li)
             li->line_pos++;
         }
     }
-    else if(li->input[li->pos] == '//')
+    else if(li->input[li->pos] == '/')
     {
         // /=
         if(li->input[li->pos+1] == '=')
@@ -534,6 +534,7 @@ token_node Lex_Step(LexInfo * li)
     tmp.level = li->level;
     tmp.str[size] = '\0';
     tmp.source = li->source;
+    tmp.defined_as = _none_;
     if (tmp.TT == NODATA)
         tmp.TT = id_is_keyword(tmp.str);
 
@@ -558,7 +559,7 @@ LexInfo Lex_Begin(const string src, const string input)
         tmpToken = Lex_Step(&li);
         if (tmpToken.str[0] != '\0')
         {
-            li.TokenInfo = (token_node *)realloc(li.TokenInfo, (li.size+1) * sizeof(token_node));
+            li.TokenInfo = (token_node *)eve_realloc(li.TokenInfo, (li.size+1) * sizeof(token_node));
             li.TokenInfo[li.size] = tmpToken;
             debugf("%d|%s", li.size, li.TokenInfo[li.size].str);
             li.size++;

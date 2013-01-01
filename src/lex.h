@@ -22,7 +22,7 @@ typedef enum tTokenType
     ELIF, END, EXTENDS, EXTERN, FALSE, FOR , FUNC, FOREACH, FROM, IF, _IN, INCLUDE, IS,
     LOCAL, NIL, NOT, OR, PROC, PRIVATE, PROTECTED, PUBLIC, REGISTER, REQUIRE,
     RETURN,REPEAT, STEP, STATIC, SWITCH, THROW, TRUE, THEN, TRY, TO, TYPE, UNTIL, USE,
-    VAR,  VOLATILE, WHILE, WITH, XOR, OF, KEY, VIRTUAL, STATIC_CALL, DYN_CALL,
+    VAR,  VOLATILE, WHILE, WITH, XOR, OF, KEY, VIRTUAL, STATIC_CALL, DYN_CALL, CTYPE,
 
     /* types */
     ARRAY, STRUCT, ENUM,
@@ -55,6 +55,7 @@ static const tToken Tokens[] =
     //{CATCH, "catch"},
     {CDEF, "cdef"},
     {CIMPORT, "cimport"},
+    {CTYPE, "ctype"},
     {CLASS, "class"},
     {CONST, "const"},
     {CONTINUE, "continue"},
@@ -138,10 +139,16 @@ static const tToken Tokens[] =
     {'~', "~"},
 };
 
+typedef enum tDefinedToken
+{
+    _var_, _func_, _proc_, _type_, _class_, _none_
+}tDefinedToken;
+
 typedef struct _token_node
 {
     tTokenType TT;
     string    str;
+    tDefinedToken defined_as;
     int  expected;
     long pos;
     long line_num;

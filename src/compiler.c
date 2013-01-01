@@ -4,14 +4,15 @@
  * check eve.h for copyright informations
  */
 
-#include <libtcc.h>
+#include "libtcc.h"
 #include <stdio.h>
 
 #include "eve.h"
 #include "error.h"
 #include "includes.h"
+#include "libtcc.h"
 
-void eve_compile(char * file, int argc, char ** argv)
+int eve_compile(char * file, int argc, char ** argv)
 {
     TCCState *s;
 
@@ -46,6 +47,7 @@ void eve_compile(char * file, int argc, char ** argv)
 
     if (tcc_compile_string(s, readfile(file)) == -1)
         return 1;
+
     switch (buildmode)
     {
     case 0:

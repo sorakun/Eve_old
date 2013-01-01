@@ -1,0 +1,11 @@
+import io;
+
+cimport "clib/strlib.c";
+
+func int main
+
+  str  x = "Yosh!\n" + "hello";
+  printf(x);
+  int y;
+  scanf("%d", @y);
+end

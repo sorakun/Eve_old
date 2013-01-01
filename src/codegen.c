@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "codegen.h"
 #include "eve.h"
 #include "error.h"
 #include "lex.h"
@@ -15,9 +16,10 @@
 #include "includes.h"
 #include "types.h"
 
-
 FILE * out;
 FILE * hout;
+
+void gen_code_func(tThread * func);
 
 string get_token_str(token_node token)
 {
@@ -39,6 +41,12 @@ string get_token_str(token_node token)
         return "else if";
     case NIL:
         return "NULL";
+    case HEX:
+        {
+            string tmp = strdup("0x");
+            strcat(tmp, token.str+1);
+            return tmp;
+        }
     default:
         return token.str;
     }
@@ -222,12 +230,15 @@ void outputnode(tStatementNode * node, int EOS)
                          fprintf(out, " & ");
                         outputnode(node->left, 0);
                     }
-                    if(node->right->args>1)
+
+                    debugf("out %d\n", node->right->acount);
+
+                    if(node->right->acount>0)
                         fprintf(out, ", ");
                     for (i=0; i<node->right->acount; i++)
                     {
                         outputnode(node->right->args[i],  0);
-                        if (i+1 < node->acount)
+                        if (node->right->acount != i+1)
                             fprintf(out, ", ");
                     }
                     fprintf(out, ")");
@@ -255,7 +266,7 @@ void outputnode(tStatementNode * node, int EOS)
                        //  fprintf(out, " & ");
                         outputnode(node->left, 0);
                     }
-                    if(node->right->args>1)
+                    if(node->right->acount>0)
                         fprintf(out, ", ");
                     for (i=0; i<node->right->acount; i++)
                     {
@@ -346,6 +357,7 @@ void gen_code_func(tThread * func)
 
 string gen_code(string file, tThread * main)
 {
+    debugf("generating code\n");
     int i;
     string fname  = strdup(file); //  .c
     string fname2 = strdup(file); // .h
@@ -364,8 +376,10 @@ string gen_code(string file, tThread * main)
 
     fprintf(out, "#include \"%s\"\n", fname2);
     // generating types in hout (.h)
-    for (i = BASIC_TYPES_COUNT; i<global_types_count; i++)
+    for (i = BASIC_TYPES_COUNT-1; i<global_types_count; i++)
     {
+        if (global_types[i].type_kind == __ctype)
+            continue;
         if((global_types[i].type_kind == __none) || (global_types[i].type_kind == __array))
         {
             fprintf(hout, "typedef %s ", global_types[i].pointerto);

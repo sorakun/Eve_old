@@ -11,6 +11,7 @@
 #include "lex.h"
 #include "parse.h"
 #include "error.h"
+#include "includes.h"
 
 void parse_cmds(int argc, char **argv)
 {
@@ -85,7 +86,8 @@ int main(int argc, char **argv)
     }
     parse_cmds(argc, argv);
     global_types = create_global_types();
-    global_types_count = 6;
+    init_imported_files();
+    global_types_count = 5;
     init_inc();
     init_functions_stack();
     LexInfo li;
@@ -93,7 +95,9 @@ int main(int argc, char **argv)
     global_thread = create_thread(_main, NULL, "__main__", "void", NULL, 0, 0, 0, 0);
     start_parse(&li);
     debugf("parsing ended successfully.\n");
+    free_imported_files();
     string src = strdup(gen_code(compile_file, global_thread));
+    debugf("preparing compilation.");
     eve_compile(src, argc, argv);
     debugf("\nExecution Ended.\nTotal allocated memory: %d\n", allocated_mem);
     return 0;

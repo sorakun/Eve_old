@@ -1,5 +1,8 @@
 # Eve programming language common data types library.
 
+cimport "clib/strlib.c";
+
+type str    is array of char;
 type pint   is ^ int;
 type pfloat is ^ float;
 type pchar  is ^ char;

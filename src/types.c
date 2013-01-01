@@ -25,21 +25,21 @@ tType * create_global_types()
     types[0].name = strdup("int");
     types[0].pointer = 0;
     types[0].pointerto = NULL;
-    types[1].name = strdup("str");
+//    types[1].name = strdup("str");
+//    types[1].pointer = 0;
+//    types[1].pointerto = NULL;
+    types[1].name = strdup("float");
     types[1].pointer = 0;
     types[1].pointerto = NULL;
-    types[2].name = strdup("float");
+    types[2].name = strdup("char");
     types[2].pointer = 0;
     types[2].pointerto = NULL;
-    types[3].name = strdup("char");
+    types[3].name = strdup("bool");
     types[3].pointer = 0;
     types[3].pointerto = NULL;
-    types[4].name = strdup("bool");
+    types[4].name = strdup("void");
     types[4].pointer = 0;
     types[4].pointerto = NULL;
-    types[5].name = strdup("void");
-    types[5].pointer = 0;
-    types[5].pointerto = NULL;
 
     return types;
 }
@@ -75,7 +75,7 @@ int type_is_defined(const string name)
     return 0;
 }
 
-tType find_type(string name)
+tType find_type(const string name)
 {
     int i;
     for (i = 0; i < global_types_count; i++)
@@ -121,7 +121,7 @@ tType find_type_root(tType type)
 
         tmp = find_type(tmp.pointerto);
     }
-    tmp.pointerto = p_level;
+    tmp.pointer = p_level;
     debugf("type: %d %s\n", p_level, tmp.name);
     return tmp;
 

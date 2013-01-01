@@ -1,0 +1,6 @@
+ctype FILE from stdio;
+type pFILE is ^ FILE;
+
+cdef func pFILE fopen;
+cdef proc fprintf;
+cdef proc  fclose;

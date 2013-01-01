@@ -29,7 +29,7 @@ void add_inc(string path)
     for (; i<included_files_count; i++)
         if(strcmp(path, included_files[i]) == 0)
         {
-            eve_warning("File %s was already imported (it wont be imported twice).", included_files[i]);
+            eve_warning("File '%s' was already imported (it wont be imported twice).", included_files[i]);
             return;
         }
     included_files_count++;
@@ -47,10 +47,40 @@ void add_cinc(string path)
     for (; i<cimport_files_count; i++)
         if(strcmp(path2, cimport_files[i]) == 0)
         {
-            eve_warning("C file %s was already imported (it wont be imported twice).", cimport_files[i]);
+            eve_warning("C file '%s' was already imported (it wont be imported twice).", cimport_files[i]);
             return;
         }
     cimport_files_count++;
     cimport_files = (string)eve_realloc(cimport_files, cimport_files_count*sizeof(char));
     cimport_files[cimport_files_count-1] = strdup(path2);
+}
+
+void init_imported_files()
+{
+    imported_files = (string*)eve_malloc(sizeof(string));
+    imported_files_count = 0;
+}
+
+void add_imported_file(string name)
+{
+    imported_files = (string*)eve_realloc(imported_files, sizeof(string));
+    imported_files[imported_files_count] = strdup(name);
+    imported_files_count++;
+}
+
+int file_is_imported(string name)
+{
+    int i = 0;
+    for (; i<imported_files_count; i++)
+        if (strcmp(name, imported_files[i]) ==0)
+            return 1;
+    return 0;
+}
+
+void free_imported_files()
+{
+    int i = 0;
+    for (; i<imported_files_count; i++)
+        free(imported_files[i]);
+    free(imported_files);
 }

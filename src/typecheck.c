@@ -20,7 +20,7 @@ void match_type(tStatementNode * node, string type, tThread * thread);
 
 int compare_type(string t1, string t2)
 {
-    //debugf("comparing %s with %s", t1, t2);
+    debugf("[compare_type]comparing %s with %s", t1, t2);
     tType tt1 = find_type_root(find_type(t1)), tt2 = find_type_root(find_type(t2));
 
 
@@ -86,23 +86,7 @@ string get_op_type(tStatementNode * node, tThread * thread)
     }
 
     case NIL:
-        if (node->parent != NULL)
-        {
-            if (node->parent->left != NULL)
-            {
-                if (node->parent->left->type.TT != NULL)
-                {
-                    string tmpTypeName = get_op_type(node->parent->left, thread);
-                    tType tmpType = find_type(tmpTypeName);
-                    if (tmpType.pointer)
-                        return tmpTypeName;
-                    else // for a more clear error
-                        eve_custom_error(EVE_INVALID_USE_OF_NIL, "file: '%s', line: %d, pos: %d, Cannot assign nil to a non-pointer variable.",
-                                         node->type.source, node->type.line_num, node->type.pos);
-                }
-            }
-
-        }
+        return "nil";
         //eve_custom_error(EVE_INVALID_USE_OF_NIL, "file: '%s', line: %d, pos: %d, Invalid use of nil.",
         //                 node->type.source, node->type.line_num, node->type.pos);
     }
@@ -442,19 +426,22 @@ string get_op_type(tStatementNode * node, tThread * thread)
                                  node->type.pos, node->type.str);
             return type;
 
-        case '.': case DYN_CALL:
+        case '.':
+        case DYN_CALL:
         {
             string tname = get_op_type(node->left, thread);
             debugf("type of %s is %s\n", node->left->type.str, tname);
             tmp = find_type(tname);
+            type = find_type_pointerto(tmp);
+            tType tmp2 = find_type(type);
             if (node->type.TT == DYN_CALL)
                 if (tmp.pointer == 0)
                     eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, left operand of operator '->' must be pointer type.",
                                      node->type.source, node->left->type.line_num, node->left->type.pos);
-            type = find_type_pointerto(tmp);
+                else
+                    tmp = tmp2;
 
-
-            debugf("type = %s\n", type);
+            debugf("type = %s, %s\n", type, tmp2.name);
             debugf("class = %s.%s\n", node->left->type.str, node->right->type.str);
             if (tmp.type_kind == __class)
             {
@@ -490,7 +477,7 @@ string get_op_type(tStatementNode * node, tThread * thread)
                     eve_custom_error(Eve_INVALID_CLASS_OPERAND, "file: '%s', line: %d, pos: %d, type of \"%s\"is not a valid class method.\n",
                                      node->type.source, node->type.line_num, node->type.pos, node->type.str);
             }
-            eve_custom_error(Eve_INVALID_CLASS_OPERAND, "file: '%s', line: %d, pos: %d, type of \"%s\"is not a valid class operand.\n",
+            eve_custom_error(Eve_INVALID_CLASS_OPERAND, "file: '%s', line: %d, pos: %d, type of \"%s\" is not a valid class operand.\n",
                              node->type.source, node->type.line_num, node->type.pos, node->left->type.str);
         }
         }
@@ -512,8 +499,7 @@ string get_op_type(tStatementNode * node, tThread * thread)
             debugf("[func_is_defined]: param %d is %s\n", i, fn->params[i].type);
             match_type(node->args[i], fn->params[i].type, thread);
         }
-        tType tmp = find_type(fn->return_type);
-        string type = find_type_pointerto(tmp);
+        string type = find_type(fn->return_type).name;
         if(type == NULL)
             eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
                              node->type.source, node->type.line_num,
@@ -533,8 +519,59 @@ void match_type(tStatementNode * node, string type, tThread * thread)
 {
     debugf("node is %s, require type %s\n", node->type.str, type);
     string typ = strdup(get_op_type(node, thread));
-    if(!compare_type(typ, type))
-        eve_custom_error(EVE_INVALID_DATA_TYPE, "file: '%s', line: %d, pos: %d, Invalid data type. type %s expected but %s was founded of variable/value %s",
-                         node->type.source, node->type.line_num, node->type.pos ,type, typ, node->type.str);
+    // pointers + nil?
+    if (strcmp(typ, "nil") ==0)
+    {
+        tType tmp = find_type_root(find_type(type));
+        debugf("pointer to %s level %d\n", tmp.name, tmp.pointer);
+        if (tmp.pointer != 0)
+        {
+
+            debugf("yes\n");
+            return;
+        }
+    }
+
+    else if(compare_type(typ, type))
+        return;
+    else
+    {
+        tType tmp = find_type_root(find_type(type));
+
+        int ispointer = 0;
+        if (tmp.pointer != 0)
+            ispointer = 1;
+
+        debugf("type = want %s (tmp = %s) got %s main_node %s\n", type, tmp.name, typ, node->parent->type.str);
+        if ((tmp.type_kind == __class) && (tmp.class_info.key_index != -1))
+        {
+            debugf("class with key value\n");
+            if (compare_type(tmp.class_info.variables[tmp.class_info.key_index].type, typ))
+            {
+                tStatementNode * tmpnode = (tStatementNode*)eve_malloc(sizeof(tStatementNode));
+
+                tmpnode->type = node->type;
+                if (ispointer == 0)
+                    tmpnode->type.TT = '.';
+                else
+                    tmpnode->type.TT = DYN_CALL;
+
+                tmpnode->parent = node->parent;
+                tmpnode->parent_thread = thread;
+                tmpnode->left = node->parent->left;
+                tmpnode->left->parent = tmpnode;
+                node->parent->left = tmpnode;
+
+                tmpnode->right = (tStatementNode*)eve_malloc(sizeof(tStatementNode));
+                tmpnode->right->parent = tmpnode;
+                tmpnode->right->parent_thread = thread;
+                tmpnode->right->type = tmp.class_info.variables[tmp.class_info.key_index].info;
+                debugf("key : index: %d, %s", tmp.class_info.key_index, tmp.class_info.variables[tmp.class_info.key_index].info.str);
+                return;
+            }
+        }
+    }
+    eve_custom_error(EVE_INVALID_DATA_TYPE, "file: '%s', line: %d, pos: %d, Invalid data type. type %s expected but %s was founded of variable/value %s",
+                     node->type.source, node->type.line_num, node->type.pos ,type, typ, node->type.str);
 }
 

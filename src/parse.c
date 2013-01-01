@@ -712,8 +712,7 @@ l:
                 eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
             string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
-            tType tmp = find_type(tname);
-            string type = find_type_pointerto(tmp);
+            string type = find_type(tname).name;
             if(type == NULL)
                 eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
                                  li->source, thread->instructions[thread->icount]->left->type.line_num,
@@ -729,8 +728,7 @@ l:
                 eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
             string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
-            tType tmp = find_type(tname);
-            string type = find_type_pointerto(tmp);
+            string type = find_type(tname).name;
             if(type == NULL)
                 eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
                                  li->source, thread->instructions[thread->icount]->left->type.line_num,
@@ -775,8 +773,7 @@ l:
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
             string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
             debugf("type is %s\n", tname);
-            tType tmp = find_type(tname);
-            string type = find_type_pointerto(tmp);
+            string type = find_type(tname).name;
             if(type == NULL)
                 eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
                                  li->source, thread->instructions[thread->icount]->left->type.line_num,
@@ -794,8 +791,7 @@ l:
                 eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
             string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
-            tType tmp = find_type(tname);
-            string type = find_type_pointerto(tmp);
+            string type = find_type(tname).name;
             if(type == NULL)
                 eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
                                  li->source, thread->instructions[thread->icount]->left->type.line_num,
@@ -835,8 +831,7 @@ l:
         if ((thread->instructions[thread->icount]->type.TT == '.') || (thread->instructions[thread->icount]->type.TT == DYN_CALL))
         {
             string tname = get_op_type(thread->instructions[thread->icount], thread);
-            tType tmp = find_type(tname);
-            string type = find_type_pointerto(tmp);
+            string type = find_type(tname).name;
             if(type == NULL)
                 eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
                                  li->source, thread->instructions[thread->icount]->left->type.line_num,
@@ -1214,8 +1209,8 @@ void docdef(LexInfo * li, tThread * thread)
         match(li, IDENTIFIER);
         add_inc(currenttokenstring(li));
         lexstep(li);
-        match(li, ';');
     }
+    match(li, ';');
     lexstep(li);
 }
 
@@ -1236,7 +1231,7 @@ void doinclude(LexInfo * li, tThread * thread)
 l:
     {
         match(li, IDENTIFIER);
-        //printf("path = %s\n", getenv("PYTHONPATH"));
+        //printf("path = %s\n", getenv("EVEPATH"));
         /* here we should save the include path in the system's environment variables */
         string path = strdup("");
         strcat(path, currenttokenstring(li));
@@ -1261,10 +1256,13 @@ l:
                                      li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, path);
             }
         }
+        if (!file_is_imported(path))
+        {
+            add_imported_file(path);
+            LexInfo l = Lex_Begin(path, readfile(path));
+            start_parse(&l);
+        }
 
-
-        LexInfo l = Lex_Begin(path, readfile(path));
-        start_parse(&l);
 
         lexstep(li);
         if(currenttoken(li) == ',')
@@ -1630,6 +1628,7 @@ void doclassvar(LexInfo * li,tThread * thread, class_ * c)
         c->variables = (tVar*)eve_realloc(c->variables, (c->vcount+1)*sizeof(tVar));
         c->variables[c->vcount].name = strdup(currenttokenstring(li));
         c->variables[c->vcount].type = strdup(type);
+        c->variables[c->vcount].info = li->TokenInfo[li->pos];
         if (!name_is_unique(c->variables[c->vcount].name, thread, 1))
             eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, identifier '%s' is already defined.",
                              li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, c->variables[c->vcount].name);
@@ -1658,6 +1657,7 @@ label:
             c->variables = (tVar*)eve_realloc(c->variables, (c->vcount+1)*sizeof(tVar));
             c->variables[c->vcount].name = strdup(currenttokenstring(li));
             c->variables[c->vcount].type = strdup(type);
+            c->variables[c->vcount].info = li->TokenInfo[li->pos];
             if (!name_is_unique(c->variables[c->vcount].name, thread, 1))
                 eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, identifier '%s' is already defined.",
                                  li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, c->variables[c->vcount].name);
@@ -1705,6 +1705,7 @@ void doclass(LexInfo * li, tThread * thread)
     myclass.class_info = c;
     myclass.name = c.name;
     myclass.pointer = 0;
+    myclass.pointerto = NULL;
     int tmp_index = global_types_count;
 
     if (!name_is_unique(c.name, thread, 1))
@@ -1712,7 +1713,7 @@ void doclass(LexInfo * li, tThread * thread)
                          li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
     register_type(myclass);
     lexstep(li);
-    if(currenttoken(li) == "(")
+    if(currenttoken(li) == '(')
     {
         // templates ..
     }
@@ -1737,6 +1738,29 @@ void doclass(LexInfo * li, tThread * thread)
         global_types[tmp_index] = myclass;
     }
     match(li, END);
+    lexstep(li);
+    debugf("end of class\n");
+}
+
+void doctype(LexInfo * li, tThread * thread)
+{
+    lexstep(li);
+    match(li, IDENTIFIER);
+    tType tmp;
+    tmp.name = strdup(currenttokenstring(li));
+    tmp.pointer = 0;
+    tmp.pointerto = NULL;
+    tmp.type_kind = __ctype;
+    lexstep(li);
+    register_type(tmp);
+    if (currenttoken(li) == FROM)
+    {
+        lexstep(li);
+        match(li, IDENTIFIER);
+        add_inc(currenttokenstring(li));
+        lexstep(li);
+        match(li, ';');
+    }
     lexstep(li);
 }
 
@@ -1776,8 +1800,13 @@ void dostmt(LexInfo * li, tThread * thread)
         docimport(li, thread);
         break;
 
+    case CTYPE:
+        doctype(li, thread);
+        break;
+
     case CLASS:
         doclass(li, thread);
+        break;
 
     case FUNC:
         dofunction(li, thread);

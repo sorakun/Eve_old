@@ -1,0 +1,28 @@
+
+#Eve file utilities
+import types, cfiles;
+
+class File
+
+   str path;
+   pFILE file;
+   bool Opened;
+
+   proc Open(str path, str mode)
+        self->file = fopen(path, mode);
+        self->path = path;
+        self->Opened = true;
+   end
+
+   proc Write(str text)
+        fprintf(self->file, text);
+   end
+
+   proc Close
+        fclose(self->file);
+        self->path = nil;
+        self->Opened = false;
+   end
+end
+
+

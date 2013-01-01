@@ -1,0 +1,9 @@
+import io, types;
+
+func int main
+  int  x = 1-2+3;
+  pint y = @x;
+  ^y = 13;
+  printf("x = %d\n", x);
+  getch;
+end

@@ -34,7 +34,7 @@ typedef struct tField
 
 typedef enum tType_kind
 {
-    __array, __enum, __class, __none, __struct, __pclass, // pointer to class
+    __array, __enum, __class, __none, __struct, __pclass, __ctype// pointer to class
 } tType_kind;
 
 typedef struct class_
@@ -135,7 +135,6 @@ tType * global_types;
 char* lib_path;
 tThread ** global_functions;
 int global_functions_count; // # of defined parameters in case of function/procedure
-void start_parse(LexInfo * li);
 tThread * global_thread;
 
 #endif

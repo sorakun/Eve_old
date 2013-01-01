@@ -16,4 +16,20 @@ int included_files_count;
 string * cimport_files;
 int cimport_files_count;
 
+string * imported_files;
+int imported_files_count;
+
+void init_inc();
+
+void add_inc(string path);
+
+void add_cinc(string path);
+
+void init_imported_files();
+
+void add_imported_file(string name);
+
+int file_is_imported(string name);
+
+void free_imported_files();
 #endif

@@ -41,7 +41,7 @@ int proc_is_defined(string name)
     debugf("[proc_is_defined] working on %s\n", name);
     for (i = 0; i < global_functions_count; i++)
     {
-        debugf("[proc_is_defined]:comparing %s with %s\n", name, global_functions[i]->name);
+        debugf("[proc_is_defined]:comparing %s with %s with type %s\n", name, global_functions[i]->name, global_functions[i]->return_type);
         if (strcmp(name, global_functions[i]->name) == 0)
         {
             // it should be func not proc
@@ -66,7 +66,7 @@ tThread * find_func(string name, tThreadType type)
     debugf("[find_func] working on %s\n", name);
     for (i = 0; i < global_functions_count; i++)
     {
-        debugf("[find_func]:comparing %s with %s\n", name, global_functions[i]->name);
+        debugf("[find_func]:comparing %s with %s with type %s\n", name, global_functions[i]->name, global_functions[i]->return_type);
         if (strcmp(name, global_functions[i]->name) == 0)
         {
             // it should be func not proc
@@ -90,7 +90,7 @@ void init_functions_stack()
 
 void register_function(tThread * func)
 {
-    debugf("[egisterfunction] registering %s at pos %d\n", func->name, global_functions_count);
+    debugf("[registerfunction] registering %s at pos %d\n", func->name, global_functions_count);
     global_functions_count++;
     global_functions = (tThread**)eve_realloc(global_functions, global_functions_count*sizeof(tThread*));
     global_functions[global_functions_count-1] = func;

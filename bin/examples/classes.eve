@@ -1,0 +1,9 @@
+# OOP in Eve
+# This is not implemented yet, just some code preview.
+
+class Int
+	
+	key int x;
+	
+	func int abs(
+   
