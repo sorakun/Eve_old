@@ -142,7 +142,7 @@ static const tToken Tokens[] =
 typedef enum tDefinedToken
 {
     _var_, _func_, _proc_, _type_, _class_, _none_
-}tDefinedToken;
+} tDefinedToken;
 
 typedef struct _token_node
 {

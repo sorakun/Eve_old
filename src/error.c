@@ -67,7 +67,7 @@ string getErrorType(int type)
     case 8:
         return "Invalid use of nil";
     case 9:
-        return "Identifier already defined.";
+        return "Identifier already defined";
     case 10:
         return "Wrong mod expected";
     case 11:
@@ -89,13 +89,21 @@ string getErrorType(int type)
     case 19:
         return "Unable to read file stream.";
     case 20:
-        return "Wrong function definition.";
+        return "Wrong function definition";
     case 21:
         return "Key redefinition";
     case 22:
         return "Invalid class operand";
     case 23:
         return "Invalid class method";
+    case 24:
+        return "Method already defined";
+    case 25:
+        return "Wrong method definition";
+    case 26:
+        return "Definition expected";
+    case 27:
+        return "Invalid operation";
     }
 }
 

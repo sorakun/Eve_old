@@ -1,0 +1,7 @@
+  - Add constructors and destructors
+  - implement encapsulation 
+  - Implement memory (re)allocation.
+  - Fix issue with for loop, which ends before the required value.
+  - Implicit type checking using keyword "let".
+  
+  - Fix issue with nil in type checking. FIXED 01/01/2013

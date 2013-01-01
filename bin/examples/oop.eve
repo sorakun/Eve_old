@@ -9,9 +9,6 @@ class epic
 	int value;
 	float size;
 	str name;
-
-        #__pepic x;
-
 end
 
 func int main

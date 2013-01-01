@@ -1,0 +1,48 @@
+import types, io, fileutils;
+
+class Test01
+	
+	key int val;
+	
+	proc test01(int x)
+		printf("%d, %d.\n", self->val+x, x);
+	end
+	
+	func int test02(int x)
+		printf("%d, %d.\n", self->val, x);
+		return x;
+	end
+	
+	proc test03(str t);
+	func str test04(str t);
+	
+end
+
+proc Test01.test03(str t)
+	printf("%s\n", t);
+end
+
+func str Test01.test04(str t)
+	return t;
+end
+
+proc test
+	Test01 T = 3;
+	T.test01(4);
+end
+
+type ATEST is array of Test01;
+
+func int main
+	test;
+	ATEST x;
+	Test01 t;
+	Test01 t2;
+	t = 30;
+	t2 = 23;
+	x:0 = t;
+	t2.test01(0);
+	(x:0).val = 400;
+	(x:0).test01(10);
+	return 0;
+end

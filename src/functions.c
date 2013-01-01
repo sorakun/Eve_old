@@ -12,7 +12,7 @@
 #include "lex.h"
 #include "parse.h"
 
-int func_is_defined(string name)
+int func_is_defined(string name, tThreadType type)
 {
     int i;
     debugf("[funcisdefined] working on %s\n", name);
@@ -23,32 +23,9 @@ int func_is_defined(string name)
         {
             // it should be func not proc
             debugf("[func_is_defined] %s is defined, but is it proc or func\n", name);
-            if(global_functions[i]->type == _func)
+            if(global_functions[i]->type == type)
             {
                 debugf("[func_is_defined] %s is defined\n", name);
-                return 1;
-            }
-            else
-                return 0;
-        }
-    }
-    return 0;
-}
-
-int proc_is_defined(string name)
-{
-    int i;
-    debugf("[proc_is_defined] working on %s\n", name);
-    for (i = 0; i < global_functions_count; i++)
-    {
-        debugf("[proc_is_defined]:comparing %s with %s with type %s\n", name, global_functions[i]->name, global_functions[i]->return_type);
-        if (strcmp(name, global_functions[i]->name) == 0)
-        {
-            // it should be func not proc
-            debugf("[proc_is_defined] %s is defined, but is it proc or func\n", name);
-            if(global_functions[i]->type == _proc)
-            {
-                debugf("[proc_is_defined] %s is defined\n", name);
                 return 1;
             }
             else

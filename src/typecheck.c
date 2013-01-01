@@ -38,7 +38,7 @@ int compare_type(string t1, string t2)
 
 string get_op_type(tStatementNode * node, tThread * thread)
 {
-    //debugf("[get_op_type] op = %s\n", get_token_str(node->type.str));
+    debugf("[get_op_type] op = %s\n", get_token_str(node->type.str));
     int i = 0;
     switch(node->type.TT)
     {
@@ -464,6 +464,7 @@ string get_op_type(tStatementNode * node, tThread * thread)
 
                     node->right->member_func = 1;
                     node->right->gen_name = strdup(tmp.class_info.methodes[pos]->gen_name);
+                    debugf("ending method call.\n");
                     return tmp.class_info.methodes[pos]->return_type;
                 }
 
@@ -482,7 +483,7 @@ string get_op_type(tStatementNode * node, tThread * thread)
         }
         }
     }
-    if(func_is_defined(node->type.str))
+    if(func_is_defined(node->type.str, _func))
     {
         tThread * fn = find_func(node->type.str, _func);
 
@@ -506,12 +507,12 @@ string get_op_type(tStatementNode * node, tThread * thread)
                              node->type.pos, node->type.str);
         return type;
     }
-    if (proc_is_defined(node->type.str))
+    if (func_is_defined(node->type.str, _func))
     {
         eve_custom_error(EVE_INVALID_DATA_TYPE, "file: '%s', line: %d, pos: %d, Procedure %s can not be called in statements",
                          node->type.source, node->type.line_num, node->type.pos, node->type.str);
     }
-    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifiers '%s' is not defined.",
+    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifier '%s' is not defined.",
                      node->type.source, node->type.line_num, node->type.pos, node->type.str);
 }
 
@@ -525,11 +526,7 @@ void match_type(tStatementNode * node, string type, tThread * thread)
         tType tmp = find_type_root(find_type(type));
         debugf("pointer to %s level %d\n", tmp.name, tmp.pointer);
         if (tmp.pointer != 0)
-        {
-
-            debugf("yes\n");
             return;
-        }
     }
 
     else if(compare_type(typ, type))

@@ -60,3 +60,17 @@ int is_class_func(char * name)
     }
     return 0;
 }
+
+tThread * get_member_func(char * name, class_ * c)
+{
+{
+    int pos = 0;
+    for(; pos < c->mcount; pos ++)
+    {
+        debugf("looking for class func %s vs %s (%s)\n", name, c->methodes[pos]->name, c->methodes[pos]->gen_name);
+        if(strcmp(name, c->methodes[pos]->name) == 0)
+            return c->methodes[pos];
+    }
+    return NULL;
+}
+}

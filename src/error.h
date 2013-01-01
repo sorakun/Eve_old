@@ -31,5 +31,9 @@
 #define EVE_KEY_REDEFINITION            21
 #define Eve_INVALID_CLASS_OPERAND       22
 #define Eve_INVALID_CLASS_METHOD        23
+#define EVE_METHOD_ALREADY_DEFINED      24
+#define EVE_WRONG_METHOD_DEFINITION     25
+#define EVE_DEFENITION_EXPECTED         26
+#define EVE_INVALID_OPERATION           27
 
 #endif

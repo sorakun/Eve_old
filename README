@@ -6,12 +6,13 @@ low level tasks like memory allocation, pointers, etc,
 but in a higher and safer layer.
 
 Eve also comes with powerful C features and an elegent
-syntax which is a mix of Caml and Ada, which allow fast 
+syntax which is a mix of Caml and Ada, that allow fast 
 typing and code readability.
 
 Eve features are:
   
   - Cross platform compiler.
+  - Object Oriented language
   - Imperative (Procedural) programming.
   - Strong typing.
   - Static typing (safe typing).

@@ -42,11 +42,11 @@ string get_token_str(token_node token)
     case NIL:
         return "NULL";
     case HEX:
-        {
-            string tmp = strdup("0x");
-            strcat(tmp, token.str+1);
-            return tmp;
-        }
+    {
+        string tmp = strdup("0x");
+        strcat(tmp, token.str+1);
+        return tmp;
+    }
     default:
         return token.str;
     }
@@ -58,7 +58,7 @@ void outputnode(tStatementNode * node, int EOS)
 
     int i=0;
     debugf("OUTPUT NODE = %s\n", node->type.str);
-    if (func_is_defined(node->type.str) || proc_is_defined(node->type.str))
+    if (func_is_defined(node->type.str, _func) || func_is_defined(node->type.str, _proc))
     {
         fprintf(out, "%s(", node->type.str);
         for (i=0; i<node->acount; i++)
@@ -227,7 +227,7 @@ void outputnode(tStatementNode * node, int EOS)
                     }
                     else
                     {
-                         fprintf(out, " & ");
+                        fprintf(out, " & ");
                         outputnode(node->left, 0);
                     }
 
@@ -263,7 +263,7 @@ void outputnode(tStatementNode * node, int EOS)
                     }
                     else
                     {
-                       //  fprintf(out, " & ");
+                        //  fprintf(out, " & ");
                         outputnode(node->left, 0);
                     }
                     if(node->right->acount>0)
@@ -333,6 +333,11 @@ void gen_code_func(tThread * func)
     // generating variables
     int i;
     // generating global variables
+
+    if (!func->body_defined)
+        eve_custom_error(EVE_UNKNOWN_DATA_TYPE,"file: '%s', line: %d, pos: %d, function/procedure '%s' is declared but not defined.",
+                         func->info.source, func->info.line_num, func->info.pos, func->name);
+
     for (i=0; i < func->vcount; i++)
     {
         if (func->vars[i].mod != _none)

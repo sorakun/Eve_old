@@ -2,6 +2,14 @@
 ------
 Fixes:
 ------
+  - Fixed type checking of operator ':' which slipped away from the type checker.
+  - Fixed Hex numbers, in code generation
+  - Type checking is now correct, as the old concept used was wrong.
+  - Fixed bug of type checking (pointer level) in types.c: find_type_root
+  - Fixed bug of importing files from different sources which will lead to compiler errors, dupticated functions and variables.
+  - Added -> operator, to access dynamic classes. 
+  - Added basic OOP features: class creation, basic type checking over instances, support of "self" to access class variables.
+  - Fixed the type checking system.
   -	Fixed the function and procedure Redefinition (splitting declaration and definition).
   - Type enumerator is now implemented.
   - Fixed the sub blocks generator "begin .. end".
@@ -68,5 +76,6 @@ What's Wrong:
 -------------
 
   - On Windows7, the application does not run properly, unless the application is set to Windows XP or Windows Vista comptability mode. Maybe because of the compiler I'm using which is Mingw gcc version 4.4.1 (TDM-2 mingw32).
+  ===> Fixed.
 
 Update history: 7 December 2012 - 19 Oct 2012

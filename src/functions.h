@@ -11,9 +11,7 @@
 #include "eve.h"
 #include "lex.h"
 
-int func_is_defined(string name);
-
-int proc_is_defined(string name);
+int func_is_defined(string name, tThreadType type);
 
 tThread * find_func(string name, tThreadType type);
 

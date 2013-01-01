@@ -127,6 +127,7 @@ typedef struct tThread
 
     struct tThread * parent; // a link  between a thread inside an instruction, and the parent thread.
     class_ * parent_class; // parent class, to find member variables.
+    token_node info;
 } tThread;
 
 int global_types_count;

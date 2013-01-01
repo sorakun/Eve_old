@@ -27,12 +27,6 @@ int var_is_defined(string name, tThread * thread, int check_parent)
             return 1;
     }
 
-    if (thread->parent_class != NULL)
-    {
-        debugf("[varisdefined] moving to parent class, it contains %d\n", thread->parent_class->vcount);
-        if (is_member_data(name, thread->parent_class) != -1)
-            return 1;
-    }
     debugf("[varisdefined] moving to parameters it contains %d\n", thread->pcount);
     for (i = 0; i < thread->pcount; i++)
     {
@@ -40,6 +34,13 @@ int var_is_defined(string name, tThread * thread, int check_parent)
         debugf("i = %d, %s\n", i, thread->params[i].name);
         debugf("[varisdefined]:comparing %s with %s\n", name, thread->params[i].name);
         if (strcmp(name, thread->params[i].name) == 0)
+            return 1;
+    }
+
+    if (thread->parent_class != NULL)
+    {
+        debugf("[varisdefined] moving to parent class, it contains %d\n", thread->parent_class->vcount);
+        if (is_member_data(name, thread->parent_class) != -1)
             return 1;
     }
     debugf("[varisdefined] moving to parent\n");

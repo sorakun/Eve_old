@@ -233,9 +233,9 @@ int priorityof(token_node t)
 // return 1 if t1 is less prior than t2
 int compare_op(token_node t1, token_node t2)
 {
-    if(t1.level < t2.level || func_is_defined(t2.str))
+    if(t1.level < t2.level || func_is_defined(t2.str, _func))
         return 1;
-    if (t1.level > t2.level || func_is_defined(t1.str))
+    if (t1.level > t2.level || func_is_defined(t1.str, _func))
         return 0;
     if(priorityof(t1)<priorityof(t2))
         return 0;
@@ -279,7 +279,7 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
     {
         int test = is_class_func(li->TokenInfo[i].str);
         debugf("test = %s %d\n", li->TokenInfo[i].str, test);
-        if(token_is_op(li->TokenInfo[i]) || func_is_defined(li->TokenInfo[i].str) || proc_is_defined(li->TokenInfo[i].str) || (test != 0))
+        if(token_is_op(li->TokenInfo[i]) || func_is_defined(li->TokenInfo[i].str, _func) || func_is_defined(li->TokenInfo[i].str, _proc) || (test != 0))
         {
             // case of operation
             if(token_is_op(li->TokenInfo[i]))
@@ -346,7 +346,8 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
     else
     {
         debugf("[tStatement node] min prior operation is: %s %c\n",li->TokenInfo[min_pos].str, li->TokenInfo[min_pos].TT);
-        int func = 0; int v;
+        int func = 0;
+        int v;
         if(token_is_op(li->TokenInfo[min_pos]))
         {
             debugf("[geninstruction] op %s.\n", li->TokenInfo[start].str);
@@ -369,8 +370,8 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
             tmp->right = gen_instruction(li, min_pos+1, end, thread, tmp);
             return tmp;
         }
-        if((func = func_is_defined(li->TokenInfo[min_pos].str)) || (proc_is_defined(li->TokenInfo[min_pos].str)) ||
-           (0 != (v = is_class_func(li->TokenInfo[min_pos].str))))
+        if((func = func_is_defined(li->TokenInfo[min_pos].str, _func)) || (func_is_defined(li->TokenInfo[min_pos].str, _proc)) ||
+                (0 != (v = is_class_func(li->TokenInfo[min_pos].str))))
         {
             tmp->type = li->TokenInfo[min_pos];
             if (func)
@@ -406,7 +407,7 @@ tStatementNode * gen_instruction(LexInfo * li, int start, int end, tThread * thr
 
                 }
                 while(tmp_pos2 != lex_find_token_pos(li, ')', li->size-1));
-                    li->pos = tmp_pos1;
+                li->pos = tmp_pos1;
             }
             debugf("[geninstruction] generating parameters ended, pcount %d\n", tmp->acount) ;
             return tmp;
@@ -434,7 +435,7 @@ void lexstep(LexInfo * li)
 
 int name_is_unique(string name, tThread * thread, int b)
 {
-    if (var_is_defined(name, thread, b) || type_is_defined(name) || func_is_defined(name) || proc_is_defined(name) || enum_is_defined(name))
+    if (var_is_defined(name, thread, b) || type_is_defined(name) || func_is_defined(name, _func) || func_is_defined(name, _proc) || enum_is_defined(name))
         return 0;
     return 1;
 }
@@ -657,199 +658,239 @@ void dowhile(LexInfo * li, tThread * thread)
 void dovariable(LexInfo * li, tThread * thread)
 {
     debugf("[dovariable]: \"%s\" in thread %s\n", currenttokenstring(li), thread->name);
-    // a type? means it's a variable declaration
-    tMod tmp_mod = _none;
-    int is_pointer = 0;
-    if (is_mod(li->TokenInfo[li->pos]))
+    if(currenttoken(li) == IDENTIFIER)
     {
-        if(currenttoken(li) == VAR)
-            eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, can not define a variable with mod 'var'.\n",
-                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos);
 
-        tmp_mod = token_to_mod(li->TokenInfo[li->pos]);
-        lexstep(li);
-    }
-    match(li, IDENTIFIER);
-    if(type_is_defined(currenttokenstring(li)))
-    {
-        string id = strdup(currenttokenstring(li));
-l:
-        lexstep(li);
-        debugf("[dovariable]: \"%s\"\n", currenttokenstring(li));
+        // a type? means it's a variable declaration
+        tMod tmp_mod = _none;
+        int is_pointer = 0;
+        if (is_mod(li->TokenInfo[li->pos]))
+        {
+            if(currenttoken(li) == VAR)
+                eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, can not define a variable with mod 'var'.\n",
+                                 li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos);
+
+            tmp_mod = token_to_mod(li->TokenInfo[li->pos]);
+            lexstep(li);
+        }
         match(li, IDENTIFIER);
-        int b = 1; // if local do not check in parents
-        if(tmp_mod == _local)
-            b = 0;
-        if (!name_is_unique(currenttokenstring(li), thread, b))
-            eve_custom_error(EVE_IDENTIFIER_REDEFINITON, "file: '%s', line: %d, pos: %d, identifier %s is already defined.\n",
+        if(type_is_defined(currenttokenstring(li)))
+        {
+            string id = strdup(currenttokenstring(li));
+l:
+            lexstep(li);
+            debugf("[dovariable]: \"%s\"\n", currenttokenstring(li));
+            match(li, IDENTIFIER);
+            int b = 1; // if local do not check in parents
+            if(tmp_mod == _local)
+                b = 0;
+            if (!name_is_unique(currenttokenstring(li), thread, b))
+                eve_custom_error(EVE_IDENTIFIER_REDEFINITON, "file: '%s', line: %d, pos: %d, identifier %s is already defined.\n",
+                                 li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+            else
+                register_variable(currenttokenstring(li), id, is_pointer, tmp_mod, thread);
+            /* index operator */
+            if (nexttoken(li) == ':')
+            {
+                int p = li->pos+2;
+                if (li->TokenInfo[p].TT != INTEGER)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, right operator of index must be integer.\n",
+                                     li->source, li->TokenInfo[p].line_num, li->TokenInfo[p].pos);
+
+                int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+                if(tmp_pos == -1)
+                    eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+                thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+                thread->icount++;
+
+                li->pos = tmp_pos;
+            }
+            else if(nexttoken(li) == '=' )
+            {
+                int tmp_pos = lex_find_token_pos(li, ',', li->size-1);
+                if(tmp_pos == -1)
+                    tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+
+                if(tmp_pos == -1)
+                    eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+                thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+                string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
+                string type = find_type(tname).name;
+                if(type == NULL)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                                     li->source, thread->instructions[thread->icount]->left->type.line_num,
+                                     thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+                match_type(thread->instructions[thread->icount]->right, type, thread);
+                thread->icount++;
+                li->pos = tmp_pos-1;
+            }
+            else if((nexttoken(li)=='.') || (nexttoken(li)== DYN_CALL))
+            {
+                int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+                if(tmp_pos == -1)
+                    eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+                thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+                string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
+                string type = find_type(tname).name;
+                if(type == NULL)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                                     li->source, thread->instructions[thread->icount]->left->type.line_num,
+                                     thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+                if (thread->instructions[thread->icount]->type.TT == '=')
+                    match_type(thread->instructions[thread->icount]->right, type, thread);
+                else
+                    match_type(thread->instructions[thread->icount], "void", thread);
+
+                thread->icount++;
+                li->pos = tmp_pos;
+            }
+            else
+                eve_warning("file: '%s', line: %d, pos: %d, variable not initialized.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos);
+            lexstep(li);
+            debugf("[dovariable]: now is %s\n", currenttokenstring(li));
+            if(currenttoken(li) == ',')
+                goto l;
+        }
+        else if(var_is_defined(currenttokenstring(li), thread, 1))
+        {
+            if (nexttoken(li) == ':')
+            {
+                int p = li->pos+2;
+                if (li->TokenInfo[p].TT != INTEGER)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, right operator of index must be integer.\n",
+                                     li->source, li->TokenInfo[p].line_num, li->TokenInfo[p].pos);
+
+                int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+                if(tmp_pos == -1)
+                    eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+
+                thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+
+                string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
+                string type = find_type(tname).name;
+                match_type(thread->instructions[thread->icount]->right, type, thread);
+                thread->icount++;
+                li->pos = tmp_pos;
+            }
+            else if(nexttoken(li) == '=')
+            {
+                int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+                if(tmp_pos == -1)
+                    eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+                thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+                string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
+                debugf("type is %s\n", tname);
+                string type = find_type(tname).name;
+                if(type == NULL)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                                     li->source, thread->instructions[thread->icount]->left->type.line_num,
+                                     thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+
+                match_type(thread->instructions[thread->icount]->right, type, thread);
+                thread->icount++;
+
+                li->pos = tmp_pos;
+            }
+            else if((nexttoken(li)=='.') || (nexttoken(li)== DYN_CALL))
+            {
+                int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+                if(tmp_pos == -1)
+                    eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+                thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+                string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
+                string type = find_type(tname).name;
+                if(type == NULL)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                                     li->source, thread->instructions[thread->icount]->left->type.line_num,
+                                     thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+                if (thread->instructions[thread->icount]->type.TT == '=')
+                    match_type(thread->instructions[thread->icount]->right, type, thread);
+                else
+                    match_type(thread->instructions[thread->icount], "void", thread);
+
+                thread->icount++;
+                li->pos = tmp_pos;
+            }
+            else
+                eve_warning("file: '%s', line: %d, pos: %d, assignment expression expected.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos);
+
+        }
+        else if (func_is_defined(currenttokenstring(li), _proc))
+        {
+            int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+            debugf("tmp_pos = %d\n", tmp_pos);
+            if(tmp_pos == -1)
+                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+            thread->icount++;
+            li->pos = tmp_pos;
+        }
+        else if (func_is_defined(currenttokenstring(li), _func))
+        {
+            debugf("epic code is epic\n");
+            int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+            eve_warning("file: '%s', line: %d, pos: %d, function \"%s\" is used as a statement, not inside an expression/instruction.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+
+            debugf("tmp_pos = %d\n", tmp_pos);
+            if(tmp_pos == -1)
+                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+            if ((thread->instructions[thread->icount]->type.TT == '.') || (thread->instructions[thread->icount]->type.TT == DYN_CALL))
+            {
+                string tname = get_op_type(thread->instructions[thread->icount], thread);
+                string type = find_type(tname).name;
+                if(type == NULL)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                                     li->source, thread->instructions[thread->icount]->left->type.line_num,
+                                     thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+
+                match_type(thread->instructions[thread->icount], type, thread);
+            }
+
+            thread->icount++;
+            li->pos = tmp_pos;
+        }
+        // else if it's a proc or function call.
+        // or it's an invalid identifier
+        else
+        {
+            // identifier redefinition
+            eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifier %s is not defined.\n",
                              li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-        else
-            register_variable(currenttokenstring(li), id, is_pointer, tmp_mod, thread);
-        /* index operator */
-        if (nexttoken(li) == ':')
-        {
-            int p = li->pos+2;
-            if (li->TokenInfo[p].TT != INTEGER)
-                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, right operator of index must be integer.\n",
-                                 li->source, li->TokenInfo[p].line_num, li->TokenInfo[p].pos);
-
-            int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-            if(tmp_pos == -1)
-                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-            thread->icount++;
-
-            li->pos = tmp_pos;
         }
-        else if(nexttoken(li) == '=' )
-        {
-
-            int tmp_pos = lex_find_token_pos(li, ',', li->size-1);
-            if(tmp_pos == -1)
-                tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-
-            if(tmp_pos == -1)
-                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-            string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
-            string type = find_type(tname).name;
-            if(type == NULL)
-                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
-                                 li->source, thread->instructions[thread->icount]->left->type.line_num,
-                                 thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
-            match_type(thread->instructions[thread->icount]->right, type, thread);
-            thread->icount++;
-            li->pos = tmp_pos-1;
-        }
-        else if((nexttoken(li)=='.') || (nexttoken(li)== DYN_CALL))
-        {
-            int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-            if(tmp_pos == -1)
-                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-            string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
-            string type = find_type(tname).name;
-            if(type == NULL)
-                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
-                                 li->source, thread->instructions[thread->icount]->left->type.line_num,
-                                 thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
-            if (thread->instructions[thread->icount]->type.TT == '=')
-                match_type(thread->instructions[thread->icount]->right, type, thread);
-            else
-                match_type(thread->instructions[thread->icount], "void", thread);
-
-            thread->icount++;
-            li->pos = tmp_pos;
-        }
-        else
-            eve_warning("file: '%s', line: %d, pos: %d, variable not initialized.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos);
-        lexstep(li);
-        debugf("[dovariable]: now is %s\n", currenttokenstring(li));
-        if(currenttoken(li) == ',')
-            goto l;
     }
-    else if(var_is_defined(currenttokenstring(li), thread, 1))
-    {
-        if (nexttoken(li) == ':')
-        {
-            int p = li->pos+2;
-            if (li->TokenInfo[p].TT != INTEGER)
-                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, right operator of index must be integer.\n",
-                                 li->source, li->TokenInfo[p].line_num, li->TokenInfo[p].pos);
-
-            int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-            if(tmp_pos == -1)
-                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-            thread->icount++;
-
-            li->pos = tmp_pos;
-        }
-        else if(nexttoken(li) == '=')
-        {
-            int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-            if(tmp_pos == -1)
-                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-            string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
-            debugf("type is %s\n", tname);
-            string type = find_type(tname).name;
-            if(type == NULL)
-                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
-                                 li->source, thread->instructions[thread->icount]->left->type.line_num,
-                                 thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
-
-            match_type(thread->instructions[thread->icount]->right, type, thread);
-            thread->icount++;
-
-            li->pos = tmp_pos;
-        }
-        else if((nexttoken(li)=='.') || (nexttoken(li)== DYN_CALL))
-        {
-            int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-            if(tmp_pos == -1)
-                eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-            thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-            string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
-            string type = find_type(tname).name;
-            if(type == NULL)
-                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
-                                 li->source, thread->instructions[thread->icount]->left->type.line_num,
-                                 thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
-            if (thread->instructions[thread->icount]->type.TT == '=')
-                match_type(thread->instructions[thread->icount]->right, type, thread);
-            else
-                match_type(thread->instructions[thread->icount], "void", thread);
-
-            thread->icount++;
-            li->pos = tmp_pos;
-        }
-        else
-            eve_warning("file: '%s', line: %d, pos: %d, assignment expression expected.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos);
-
-    }
-    else if (proc_is_defined(currenttokenstring(li)))
-    {
-        int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-        debugf("tmp_pos = %d\n", tmp_pos);
-        if(tmp_pos == -1)
-            eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-        thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-        thread->icount++;
-        li->pos = tmp_pos;
-    }
-    else if (func_is_defined(currenttokenstring(li)))
-    {
-        debugf("epic code is epic\n");
-        int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
-        eve_warning("file: '%s', line: %d, pos: %d, function \"%s\" is used as a statement, not inside an expression/instruction.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-
-        debugf("tmp_pos = %d\n", tmp_pos);
-        if(tmp_pos == -1)
-            eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
-        thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
-        if ((thread->instructions[thread->icount]->type.TT == '.') || (thread->instructions[thread->icount]->type.TT == DYN_CALL))
-        {
-            string tname = get_op_type(thread->instructions[thread->icount], thread);
-            string type = find_type(tname).name;
-            if(type == NULL)
-                eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
-                                 li->source, thread->instructions[thread->icount]->left->type.line_num,
-                                 thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
-
-            match_type(thread->instructions[thread->icount], type, thread);
-        }
-
-        thread->icount++;
-        li->pos = tmp_pos;
-    }
-    // else if it's a proc or function call.
-    // or it's an invalid identifier
     else
     {
-        // identifier redefinition
-        eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, identifier %s is not defined.\n",
-                         li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+        int tmp_pos = lex_find_token_pos(li, ';', li->size-1);
+
+        if(tmp_pos == -1)
+            eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
+        thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+        string tname = get_op_type(thread->instructions[thread->icount]->left, thread);
+        string type = find_type(tname).name;
+        if (token_is_op(thread->instructions[thread->icount]->type))
+            switch(thread->instructions[thread->icount]->type.TT)
+            {
+                case '=':
+                    match_type(thread->instructions[thread->icount]->right, type, thread);
+                    break;
+                case '.':
+                case DYN_CALL:
+                    match_type(thread->instructions[thread->icount], "void", thread);
+                    break;
+
+                default:
+                    eve_custom_error(EVE_INVALID_OPERATION, "file: '%s', line: %d, pos: %d, invalid operation '%s' assignment or method call expected.\n",
+                                     thread->instructions[thread->icount]->type.source, thread->instructions[thread->icount]->type.line_num,
+                                     thread->instructions[thread->icount]->type.pos, thread->instructions[thread->icount]->type.str);
+            }
+
+        if(type == NULL)
+            eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
+                             li->source, thread->instructions[thread->icount]->left->type.line_num,
+                             thread->instructions[thread->icount]->left->type.pos, thread->instructions[thread->icount]->left->type.str);
+        thread->icount++;
+        li->pos = tmp_pos;
     }
     match(li, ';');
     lexstep(li);
@@ -858,7 +899,7 @@ l:
 void parse_args(LexInfo * li, tVar * args, int * count, int * u_args)
 {
     string tmpType, tmpName;
-    //args = (tVar*)eve_malloc(sizeof(tVar));
+    args = (tVar*)eve_malloc(sizeof(tVar));
 l:
     {
         tMod tmpmod = _none;
@@ -911,28 +952,169 @@ l:
  */
 void dofunction(LexInfo * li, tThread * thread)
 {
-    // current token is "func"
+    // current token is "func" or "proc"
+    tThreadType current_type;
+    if (currenttoken(li) == FUNC)
+        current_type = _func;
+    else
+        current_type = _proc;
+
     lexstep(li);
     debugf("[dofunc] new pos = %d\n", li->pos);
     match(li, IDENTIFIER);
-    if (!type_is_defined(currenttokenstring(li)))
-        eve_custom_error(EVE_UNKNOWN_DATA_TYPE,"file: '%s', line: %d, pos: %d, identifier '%s' is not a valid data type.",
-                         li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-    string ttype = strdup(currenttokenstring(li));
-    token_node tmp_token = li->TokenInfo[li->pos];
+    string ttype;
+    token_node tmp_token;
+    if (current_type == _func)
+    {
 
-    lexstep(li);
+        if (!type_is_defined(currenttokenstring(li)))
+            eve_custom_error(EVE_UNKNOWN_DATA_TYPE, "file: '%s', line: %d, pos: %d, identifier '%s' is not a valid data type.",
+                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+        ttype = strdup(currenttokenstring(li));
+        tmp_token = li->TokenInfo[li->pos];
+        lexstep(li);
+    }
+    else
+        ttype = strdup("void");
+
+    debugf("type is = %s\n", ttype);
     match(li, IDENTIFIER);
+
+    if (nexttoken(li) == '.')
+    {
+        // class
+        tType T = find_type(currenttokenstring(li));
+        token_node info = li->TokenInfo[li->pos];
+        lexstep(li);
+        if (T.type_kind != __class)
+            eve_custom_error(EVE_INVALID_DATA_TYPE, "file: '%s', line: %d, pos: %d, identifier '%s' is not a valid class.",
+                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+        lexstep(li);
+        match(li, IDENTIFIER);
+        string name = strdup(currenttokenstring(li));
+        int pos = is_member_func(name, &T.class_info);
+        if(pos == -1)
+            eve_custom_error(Eve_INVALID_CLASS_METHOD, "file: '%s', line: %d, pos: %d, class '%s' has no method '%s'.",
+                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, T.name, name);
+        tThread * def_func = get_member_func(name, &T.class_info);
+        if (def_func->body_defined)
+            eve_custom_error(EVE_METHOD_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, class '%s' method '%s' already defined.",
+                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, T.name, name);
+        char * type1, type2;
+        if (current_type == _func)
+        {
+            type1 = strdup("function");
+            type2 = strdup("procedure");
+        }
+        else
+        {
+            type1 = strdup("procedure");
+            type2 = strdup("function");
+        }
+        if (def_func->type != current_type)
+            eve_custom_error(EVE_WRONG_METHOD_DEFINITION, "file: '%s', line: %d, pos: %d, class '%s' method '%s' defined as %s not %s.",
+                             info.source, info.line_num, info.pos, T.name, name, type2, type1);
+
+        lexstep(li);
+        int count = 0; // # of params
+        tVar * args;
+        int unlimited_args = 0;
+        if (currenttoken(li) == '(')
+        {
+            string tmpType, tmpName;
+            args = (tVar*)eve_malloc(sizeof(tVar));
+lbl:
+            {
+                tMod tmpmod = _none;
+                lexstep(li);
+                if(currenttoken(li) == TRIPLEDOT)
+                {
+                    unlimited_args=1;
+                }
+                else
+                {
+                    count++;
+                    debugf("count = %d\n", count);
+                    if (is_mod(li->TokenInfo[li->pos]))
+                    {
+                        if (currenttoken(li) == VAR)
+                            tmpmod = _var;
+                        else if (currenttoken(li) == CONST)
+                            tmpmod = _const;
+                        else
+                            eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                        lexstep(li);
+                        match(li, IDENTIFIER);
+                    }
+                    if (!type_is_defined(currenttokenstring(li)))
+                        eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                    tmpType = strdup(currenttokenstring(li));
+                    lexstep(li);
+                    match(li, IDENTIFIER);
+                    if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
+                    {
+                        tmpName = currenttokenstring(li);
+                        debugf("current name := %d : %s\n", (count)-1, currenttokenstring(li));
+                        args = (tVar*)eve_realloc(args, (count)*sizeof(tVar));
+                        args[count-1].mod = tmpmod;
+                        args[count-1].name = strdup(currenttokenstring(li));
+                        args[count-1].type = strdup(tmpType);
+                    }
+                    if(nexttoken(li) == ',')
+                    {
+                        lexstep(li);
+                        goto lbl;
+                    }
+                }
+            }
+            lexstep(li);
+            match(li, ')');
+            lexstep(li);
+        }
+        if(currenttoken(li) == ';')
+            eve_custom_error(EVE_DEFENITION_EXPECTED, "file: '%s', line: %d, pos: %d, expecting method definition before ';'.",
+                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos);
+        // Parameter checking and return type checking. Variables' names does not matter, types does!
+        if (current_type == _func)
+            if (strcmp(ttype, def_func->return_type) != 0)
+                eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, return type '%s' expected but %s was found, of function %s",
+                                 info.source, info.line_num, info.pos, def_func->return_type, ttype, name);
+
+        int i = 0;
+        if (def_func->pcount != count+1)
+            eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, number of parameters does not match, of function %s",
+                             li->source, info.line_num, info.pos, name);
+        for(; i < count; i++)
+            if(strcmp(def_func->params[i+1].type, args[i].type) != 0)
+                eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, type '%s' expected but %s was found, of parameter number %d, of function %s",
+                                 li->source, info.line_num, info.pos, def_func->params[i].type, args[i].type, i, name);
+        if(unlimited_args != def_func->unlimited_args)
+            eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, parameters does not match (multiple parameters), of function %s",
+                             li->source, info.line_num, info.pos, name);
+
+        T.class_info.methodes[pos] = create_thread(current_type, thread, def_func->name, ttype, def_func->params, count+1, 1, unlimited_args, 0);
+        T.class_info.methodes[pos]->gen_name = def_func->gen_name;
+        T.class_info.methodes[pos]->parent_class = &T.class_info;
+        T.class_info.methodes[pos]->info = tmp_token;
+        while(currenttoken(li)!=END)
+            dostmt(li, T.class_info.methodes[pos]);
+        match(li, END);
+        lexstep(li);
+        return ;
+
+    }
+
+    token_node tmp_token_name = li->TokenInfo[li->pos];
     string tname = strdup(currenttokenstring(li));
     // name should be unique
     tThread * def_func = NULL;
     if(!name_is_unique(tname, thread, 1))
     {
-        if (func_is_defined(tname))
+        if (func_is_defined(tname, current_type))
         {
-            def_func = find_func(tname, _func);
+            def_func = find_func(tname, current_type);
             if(def_func->body_defined == 1)
-                eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, function '%s' is already defined.",
+                eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, function/procedure '%s' is already defined.",
                                  li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
         }
         else
@@ -946,8 +1128,8 @@ void dofunction(LexInfo * li, tThread * thread)
     int unlimited_args = 0;
     if (currenttoken(li) == '(')
     {
-         string tmpType, tmpName;
-         args = (tVar*)eve_malloc(sizeof(tVar));
+        string tmpType, tmpName;
+        args = (tVar*)eve_malloc(sizeof(tVar));
 l:
         {
             tMod tmpmod = _none;
@@ -999,11 +1181,14 @@ l:
     // registering thread
     if(currenttoken(li)==';') // declaration
     {
-        register_function(create_thread(_func, thread, tname, ttype, args, count, 0, unlimited_args, 0));
+        tThread * myfunc = create_thread(current_type, thread, tname, ttype, args, count, 0, unlimited_args, 0);
+        myfunc->info = tmp_token_name;
+        register_function(myfunc);
     }
     else // defenition
     {
-        tThread * myfunc = create_thread(_func, thread, tname, ttype, args, count, 1, unlimited_args, 0);
+        tThread * myfunc = create_thread(current_type, thread, tname, ttype, args, count, 1, unlimited_args, 0);
+        myfunc->info = tmp_token_name;
         if(def_func == NULL)
         {
             register_function(myfunc);
@@ -1014,163 +1199,36 @@ l:
         else
         {
             // Parameter checking and return type checking. Variables' names does not matter, types does!
-
-            if (strcmp(ttype, def_func->return_type) != 0)
-                eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, return type '%s' expected but %s was found, of function %s",
-                                 li->source, tmp_token.line_num, tmp_token.pos, def_func->return_type, ttype, tname);
+            if (current_type == _func)
+                if (strcmp(ttype, def_func->return_type) != 0)
+                    eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, return type '%s' expected but %s was found, of function %s",
+                                     li->source, tmp_token.line_num, tmp_token.pos, def_func->return_type, ttype, tname);
 
             int i = 0;
             if (def_func->pcount != count)
                 eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, number of parameters does not match, of function %s",
-                                 li->source, tmp_token.line_num, tmp_token.pos, tname);
+                                 li->source, tmp_token_name.line_num, tmp_token_name.pos, tname);
             for(; i < count; i++)
                 if(strcmp(def_func->params[i].type, args[i].type) != 0)
                     eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, type '%s' expected but %s was found, of parameter number %d, of function %s",
-                                     li->source, tmp_token.line_num, tmp_token.pos, def_func->params[i].type, args[i].type, i, tname);
+                                     li->source, tmp_token_name.line_num, tmp_token_name.pos, def_func->params[i].type, args[i].type, i, tname);
             if(unlimited_args != def_func->unlimited_args)
                 eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, parameters does not match (multiple parameters), of function %s",
-                                 li->source, tmp_token.line_num, tmp_token.pos, tname);
+                                 li->source, tmp_token_name.line_num, tmp_token_name.pos, tname);
 
 
             for (i = 0; i < global_functions_count; i++)
                 if (strcmp(tname, global_functions[i]->name) == 0)
-                    if(global_functions[i]->type == _func)
+                    if(global_functions[i]->type == current_type)
                         break;
 
-            global_functions[i] = create_thread(_func, thread, tname, ttype, args, count, 1, unlimited_args, 0);
-
+            global_functions[i] = create_thread(current_type, thread, tname, ttype, args, count, 1, unlimited_args, 0);
+            global_functions[i]->info = tmp_token_name;
             while(currenttoken(li)!=END)
                 dostmt(li, global_functions[i]);
             match(li, END);
         }
 
-    }
-
-    lexstep(li);
-}
-
-void doprocedure(LexInfo * li, tThread * thread)
-{
-    debugf("[doproc] new pos = %d\n", li->pos);
-    lexstep(li);
-    match(li, IDENTIFIER);
-    string tname = strdup(currenttokenstring(li));
-    token_node tmp_token = li->TokenInfo[li->pos];
-    string tmpType, tmpName;
-    lexstep(li);
-    tMod tmpmod = _none;
-    int ispointer = 0;
-    int count = 0; // # of params
-    tVar * args;
-    int unlimited_args = 0;
-    tThread * def_proc = NULL;
-    if(!name_is_unique(tname, thread, 1))
-    {
-        if (func_is_defined(tname))
-        {
-            def_proc = find_func(tname, _proc);
-            if(def_proc->body_defined == 1)
-                eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, procedure'%s' is already defined.",
-                                 li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-        }
-        else
-            eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, identifier '%s' is already defined.",
-                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-    }
-    if (currenttoken(li) == '(')
-    {
-        debugf("YOSH\n");
-        args = (tVar*)eve_malloc(sizeof(tVar));
-l:
-        {
-            tMod tmpmod = _none;
-            lexstep(li);
-            debugf("paring parameter %s\n", currenttokenstring(li));
-            if(currenttoken(li) == TRIPLEDOT)
-            {
-                debugf("[dofunc]: function %s with unlimited args\n", tname);
-                unlimited_args=1;
-            }
-            else
-            {
-                count++;
-                if (is_mod(li->TokenInfo[li->pos]))
-                {
-                    if (currenttoken(li) == VAR)
-                        tmpmod = _var;
-                    else if (currenttoken(li) == CONST)
-                        tmpmod = _const;
-                    else
-                        eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-                    lexstep(li);
-                    match(li, IDENTIFIER);
-                }
-                if (!type_is_defined(currenttokenstring(li)))
-                    eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-                tmpType = strdup(currenttokenstring(li));
-                lexstep(li);
-                match(li, IDENTIFIER);
-                if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
-                {
-                    tmpName = currenttokenstring(li);
-                    debugf("current name = %s\n", currenttokenstring(li));
-                    args = (tVar*)eve_realloc(args, count*sizeof(tVar));
-                    args[count-1].mod = tmpmod;
-                    args[count-1].name = currenttokenstring(li);
-                    args[count-1].type = tmpType;
-                }
-                if(nexttoken(li) == ',')
-                {
-                    lexstep(li);
-                    goto l;
-                }
-            }
-        }
-        lexstep(li);
-        match(li, ')');
-        lexstep(li);
-    }
-    // registering thread
-    if(currenttoken(li)==';') // declaration
-    {
-        register_function(create_thread(_proc, thread, tname, "void", args, count, 0, unlimited_args, 0));
-    }
-    else // defenition
-    {
-        if (def_proc == NULL)
-        {
-            tThread * myfunc = create_thread(_proc, thread, tname, "void", args, count, 1, unlimited_args, 0);
-            register_function(myfunc);
-            while(currenttoken(li)!=END)
-                dostmt(li, myfunc);
-            match(li, END);
-        }
-        else
-        {
-            int i = 0;
-            if (def_proc->pcount != count)
-                eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, number of parameters does not match, of function %s",
-                                 li->source, tmp_token.line_num, tmp_token.pos, tname);
-            for(; i < count; i++)
-                if(strcmp(def_proc->params[i].type, args[i].type) != 0)
-                    eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, type '%s' expected but %s was found, of parameter number %d, of function %s",
-                                     li->source, tmp_token.line_num, tmp_token.pos, def_proc->params[i].type, args[i].type, i, tname);
-            if(unlimited_args != def_proc->unlimited_args)
-                eve_custom_error(EVE_WRONG_FUNC_DEFINITION, "file: '%s', line: %d, pos: %d, function definition is not the same, parameters does not match (multiple parameters), of function %s",
-                                 li->source, tmp_token.line_num, tmp_token.pos, tname);
-
-
-            for (i = 0; i < global_functions_count; i++)
-                if (strcmp(tname, global_functions[i]->name) == 0)
-                    if(global_functions[i]->type == _func)
-                        break;
-
-            global_functions[i] = create_thread(_func, thread, tname, NULL, args, count, 1, unlimited_args, 0);
-
-            while(currenttoken(li)!=END)
-                dostmt(li, global_functions[i]);
-            match(li, END);
-        }
     }
 
     lexstep(li);
@@ -1187,18 +1245,130 @@ void docdef(LexInfo * li, tThread * thread)
         lexstep(li);
         match(li, IDENTIFIER);
         string name = strdup(currenttokenstring(li));
-        tThread * myfunc = create_thread(_func, thread, name, type, NULL, 0, 1, 1, 1);
-        register_function(myfunc);
         lexstep(li);
+        tVar * args;
+        int u_variables = 0;
+        int count = 0;
+
+        if (currenttoken(li) == '(')
+        {
+            string tmpType, tmpName;
+            args = (tVar*)eve_malloc(sizeof(tVar));
+l:
+            {
+                tMod tmpmod = _none;
+                lexstep(li);
+                if(currenttoken(li) == TRIPLEDOT)
+                {
+                    u_variables=1;
+                }
+                else
+                {
+                    count++;
+                    debugf("count = %d\n", count);
+                    if (is_mod(li->TokenInfo[li->pos]))
+                    {
+                        if (currenttoken(li) == VAR)
+                            tmpmod = _var;
+                        else if (currenttoken(li) == CONST)
+                            tmpmod = _const;
+                        else
+                            eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                        lexstep(li);
+                        match(li, IDENTIFIER);
+                    }
+                    if (!type_is_defined(currenttokenstring(li)))
+                        eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                    tmpType = strdup(currenttokenstring(li));
+                    lexstep(li);
+                    match(li, IDENTIFIER);
+                    if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
+                    {
+                        tmpName = currenttokenstring(li);
+                        debugf("current name := %d : %s\n", (count)-1, currenttokenstring(li));
+                        args = (tVar*)eve_realloc(args, (count)*sizeof(tVar));
+                        args[count-1].mod = tmpmod;
+                        args[count-1].name = strdup(currenttokenstring(li));
+                        args[count-1].type = strdup(tmpType);
+                    }
+                    if(nexttoken(li) == ',')
+                    {
+                        lexstep(li);
+                        goto l;
+                    }
+                }
+            }
+            lexstep(li);
+            match(li, ')');
+            lexstep(li);
+        }
+        register_function(create_thread(_func, thread, name, type, args, count, 0, u_variables, 1));
+
     }
     else if (currenttoken(li) == PROC)
     {
         lexstep(li);
         match(li, IDENTIFIER);
         string name = strdup(currenttokenstring(li));
-        tThread * myfunc = create_thread(_proc, thread, name, "void", NULL, 0, 1, 1, 1);
-        register_function(myfunc);
         lexstep(li);
+        tVar * args;
+        int u_variables = 0;
+        int count = 0;
+
+        if (currenttoken(li) == '(')
+        {
+            string tmpType, tmpName;
+            args = (tVar*)eve_malloc(sizeof(tVar));
+l2:
+            {
+                tMod tmpmod = _none;
+                lexstep(li);
+                if(currenttoken(li) == TRIPLEDOT)
+                {
+                    u_variables=1;
+                }
+                else
+                {
+                    count++;
+                    debugf("count = %d\n", count);
+                    if (is_mod(li->TokenInfo[li->pos]))
+                    {
+                        if (currenttoken(li) == VAR)
+                            tmpmod = _var;
+                        else if (currenttoken(li) == CONST)
+                            tmpmod = _const;
+                        else
+                            eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                        lexstep(li);
+                        match(li, IDENTIFIER);
+                    }
+                    if (!type_is_defined(currenttokenstring(li)))
+                        eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                    tmpType = strdup(currenttokenstring(li));
+                    lexstep(li);
+                    match(li, IDENTIFIER);
+                    if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
+                    {
+                        tmpName = currenttokenstring(li);
+                        debugf("current name := %d : %s\n", (count)-1, currenttokenstring(li));
+                        args = (tVar*)eve_realloc(args, (count)*sizeof(tVar));
+                        args[count-1].mod = tmpmod;
+                        args[count-1].name = strdup(currenttokenstring(li));
+                        args[count-1].type = strdup(tmpType);
+                    }
+                    if(nexttoken(li) == ',')
+                    {
+                        lexstep(li);
+                        goto l2;
+                    }
+                }
+            }
+            lexstep(li);
+            match(li, ')');
+            lexstep(li);
+        }
+        register_function(create_thread(_proc, thread, name, "void", args, count, 0, u_variables, 1));
+
     }
     else
         eve_custom_error(EVE_STATEMENT_EXPECTED, "Syntax error: file: '%s', line %d pos %d, cdef expecting a function or a procedure.",
@@ -1430,16 +1600,30 @@ void dopointer(LexInfo * li, tThread * thread)
 
 void doclassfunc(LexInfo * li,tThread * thread, class_ * c)
 {
+    tThreadType current_type;
+    if (currenttoken(li) == FUNC)
+        current_type = _func;
+    else
+        current_type = _proc;
     lexstep(li);
-    match(li, IDENTIFIER);
-    char * func_type = strdup(currenttokenstring((li)));
-    if (!type_is_defined(func_type))
-        eve_custom_error(EVE_UNKNOWN_DATA_TYPE,"file: '%s', line: %d, pos: %d, identifier '%s' is not a valid data type.",
-                         li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, func_type);
-    lexstep(li);
+    char * func_type;
+    if (current_type == _func)
+    {
+
+        match(li, IDENTIFIER);
+        func_type = strdup(currenttokenstring((li)));
+        if (!type_is_defined(func_type))
+            eve_custom_error(EVE_UNKNOWN_DATA_TYPE,"file: '%s', line: %d, pos: %d, identifier '%s' is not a valid data type.",
+                             li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, func_type);
+        lexstep(li);
+    }
+    else
+        func_type = strdup("void");
+
     match(li, IDENTIFIER);
     char * func_name = strdup(c->name);
     char * real_name = strdup(currenttokenstring(li));
+    token_node func_info = li->TokenInfo[li->pos];
     strcat(func_name, "_");
     strcat(func_name, real_name);
     tVar * args = (tVar*)eve_malloc(sizeof(tVar));
@@ -1502,108 +1686,34 @@ l:
     args[0].name = strdup("self");
     args[0].type = strdup(c->pointer_name);
 
-    int i = 0;
     debugf("arguments of func %s:\n", func_name);
-    for (; i<count; i++)
-    {
-        debugf("arg #%d: %s, type %s.\n", i, args[i].name, args[i].type);
-    }
-
     // registering thread
     debugf("saving class func %s as %s, param count : %d\n", real_name, func_name, count);
-    c->methodes = (tThread**)eve_realloc(c->methodes, (c->mcount+1)*sizeof(tThread*));
-    c->methodes[c->mcount] = create_thread(_func, thread, real_name, func_type, args, count, 0, u_args, 0);
-    c->methodes[c->mcount]->gen_name = strdup(func_name);
-    c->methodes[c->mcount]->parent_class = c;
-    c->mcount++;
-    while(currenttoken(li)!=END)
-        dostmt(li, c->methodes[c->mcount-1]);
-    match(li, END);
-    lexstep(li);
-}
-
-void doclassproc(LexInfo * li,tThread * thread, class_ * c)
-{
-    lexstep(li);
-
-    char * func_type = strdup("void");
-
-    match(li, IDENTIFIER);
-    char * func_name = strdup(c->name);
-    char * real_name = strdup(currenttokenstring(li));
-    strcat(func_name, "_");
-    strcat(func_name, real_name);
-    tVar * args = (tVar*)eve_malloc(sizeof(tVar));
-    args[0].name = strdup("self");
-    args[0].type = strdup(c->pointer_name);
-
-    int count = 1;
-    // first arg is self.
-    lexstep(li);
-    int u_args = 0;
-    if (currenttoken(li) == '(')
+    // are header and body seperated?
+    if (currenttoken(li) == ';')
     {
-        string tmpType, tmpName;
-l:
-        {
-            tMod tmpmod = _none;
-            lexstep(li);
-            if(currenttoken(li) == TRIPLEDOT)
-            {
-                u_args=1;
-            }
-            else
-            {
-                count++;
-                debugf("count = %d\n", count);
-                if (is_mod(li->TokenInfo[li->pos]))
-                {
-                    if (currenttoken(li) == VAR)
-                        tmpmod = _var;
-                    else if (currenttoken(li) == CONST)
-                        tmpmod = _const;
-                    else
-                        eve_custom_error(EVE_WRONG_MOD_EXPECTED, "file: '%s', line: %d, pos: %d, mod '%s' is not valid in parameters.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-                    lexstep(li);
-                    match(li, IDENTIFIER);
-                }
-                if (!type_is_defined(currenttokenstring(li)))
-                    eve_custom_error(EVE_UNDEFINED_DATA_TYPE, "file: '%s', line: %d, pos: %d, type '%s' is not defined.", li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
-                tmpType = strdup(currenttokenstring(li));
-                lexstep(li);
-                match(li, IDENTIFIER);
-                if ((!type_is_defined(currenttokenstring(li)) || (!is_mod(li->TokenInfo[li->pos]))))
-                {
-                    tmpName = currenttokenstring(li);
-                    debugf("current name := %d : %s\n", (count)-1, currenttokenstring(li));
-                    args = (tVar*)eve_realloc(args, (count)*sizeof(tVar));
-                    args[count-1].mod = tmpmod;
-                    args[count-1].name = strdup(currenttokenstring(li));
-                    args[count-1].type = strdup(tmpType);
-                }
-                if(nexttoken(li) == ',')
-                {
-                    lexstep(li);
-                    goto l;
-                }
-            }
-        }
+        c->methodes = (tThread**)eve_realloc(c->methodes, (c->mcount+1)*sizeof(tThread*));
+        c->methodes[c->mcount] = create_thread(current_type, thread, real_name, func_type, args, count, 0, u_args, 0);
+        c->methodes[c->mcount]->info = func_info;
+        c->methodes[c->mcount]->gen_name = strdup(func_name);
+        c->methodes[c->mcount]->parent_class = c;
+        c->mcount++;
         lexstep(li);
-        match(li, ')');
-        lexstep(li);
+        return;
     }
-    // registering thread
-    debugf("saving class func %s as %s\n", real_name, func_name);
     c->methodes = (tThread**)eve_realloc(c->methodes, (c->mcount+1)*sizeof(tThread*));
-    c->methodes[c->mcount] = create_thread(_proc, thread, real_name, func_type, args, count, 0, u_args, 0);
+    c->methodes[c->mcount] = create_thread(current_type, thread, real_name, func_type, args, count, 1, u_args, 0);
+    c->methodes[c->mcount]->info = func_info;
     c->methodes[c->mcount]->gen_name = strdup(func_name);
     c->methodes[c->mcount]->parent_class = c;
     c->mcount++;
+
     while(currenttoken(li)!=END)
         dostmt(li, c->methodes[c->mcount-1]);
     match(li, END);
     lexstep(li);
 }
+
 void doclasstype(LexInfo * li,tThread * thread, class_ * c)
 {
 
@@ -1722,10 +1832,8 @@ void doclass(LexInfo * li, tThread * thread)
         switch(currenttoken(li))
         {
         case FUNC:
-            doclassfunc(li, thread, &c);
-            break;
         case PROC:
-            doclassproc(li, thread, &c);
+            doclassfunc(li, thread, &c);
             break;
         case TYPE:
             doclasstype(li, thread, &c);
@@ -1809,11 +1917,8 @@ void dostmt(LexInfo * li, tThread * thread)
         break;
 
     case FUNC:
-        dofunction(li, thread);
-        break;
-
     case PROC:
-        doprocedure(li, thread);
+        dofunction(li, thread);
         break;
 
     case FOR:
@@ -1851,8 +1956,7 @@ void dostmt(LexInfo * li, tThread * thread)
 
         /* unexpected tokens */
     default:
-        eve_custom_error(EVE_STATEMENT_EXPECTED, "Syntax error: file: '%s', line %d pos %d, %s expected but %s was found.",
-                         li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, "Statement", currenttokenstring(li));
+        dovariable(li, thread);
 
     }
 }
