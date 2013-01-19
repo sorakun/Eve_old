@@ -38,7 +38,7 @@ int compare_type(string t1, string t2)
 
 string get_op_type(tStatementNode * node, tThread * thread)
 {
-    debugf("[get_op_type] op = %s\n", get_token_str(node->type.str));
+    //debugf("[get_op_type] op = %s\n", get_token_str(node->type.str));
     int i = 0;
     switch(node->type.TT)
     {
@@ -471,12 +471,13 @@ string get_op_type(tStatementNode * node, tThread * thread)
 
                 else if(pos2 != -1)
                 {
+                    //debugf("Yes %s\n", node->right->type.str);
                     node->right->member_func = 0;
                     return tmp.class_info.variables[pos2].type;
                 }
                 else
-                    eve_custom_error(Eve_INVALID_CLASS_OPERAND, "file: '%s', line: %d, pos: %d, type of \"%s\"is not a valid class method.\n",
-                                     node->type.source, node->type.line_num, node->type.pos, node->type.str);
+                    eve_custom_error(Eve_INVALID_CLASS_OPERAND, "file: '%s', line: %d, pos: %d, class variable %s does not have a function/variable %s.\n",
+                                    node->type.source, node->type.line_num, node->type.pos, node->left->type.str, node->right->type.str);
             }
             eve_custom_error(Eve_INVALID_CLASS_OPERAND, "file: '%s', line: %d, pos: %d, type of \"%s\" is not a valid class operand.\n",
                              node->type.source, node->type.line_num, node->type.pos, node->left->type.str);
@@ -500,14 +501,22 @@ string get_op_type(tStatementNode * node, tThread * thread)
             debugf("[func_is_defined]: param %d is %s\n", i, fn->params[i].type);
             match_type(node->args[i], fn->params[i].type, thread);
         }
+
+        for(i = fn->pcount; i < node->acount;  i++)
+        {
+            debugf("param %d\n", i);
+            string mytype = get_op_type(node->args[i], thread);
+            match_type(node->args[i], mytype, thread);
+        }
+
+
         string type = find_type(fn->return_type).name;
         if(type == NULL)
             eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, type of \"%s\"is not defined.\n",
-                             node->type.source, node->type.line_num,
-                             node->type.pos, node->type.str);
+                             node->type.source, node->type.line_num, node->type.pos, node->type.str);
         return type;
     }
-    if (func_is_defined(node->type.str, _func))
+    if (func_is_defined(node->type.str, _proc))
     {
         eve_custom_error(EVE_INVALID_DATA_TYPE, "file: '%s', line: %d, pos: %d, Procedure %s can not be called in statements",
                          node->type.source, node->type.line_num, node->type.pos, node->type.str);
@@ -539,7 +548,7 @@ void match_type(tStatementNode * node, string type, tThread * thread)
         if (tmp.pointer != 0)
             ispointer = 1;
 
-        debugf("type = want %s (tmp = %s) got %s main_node %s\n", type, tmp.name, typ, node->parent->type.str);
+        //debugf("type = want %s (tmp = %s) got %s main_node %s\n", type, tmp.name, typ, node->parent->type.str);
         if ((tmp.type_kind == __class) && (tmp.class_info.key_index != -1))
         {
             debugf("class with key value\n");

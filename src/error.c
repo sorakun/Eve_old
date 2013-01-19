@@ -104,6 +104,12 @@ string getErrorType(int type)
         return "Definition expected";
     case 27:
         return "Invalid operation";
+    case 28:
+        return "Variable already have a read function";
+    case 29:
+        return "Variable already have a write function";
+    case 30:
+        return "Invalid use of read/write";
     }
 }
 

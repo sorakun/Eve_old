@@ -58,6 +58,21 @@ tThread * find_func(string name, tThreadType type)
     return NULL;
 }
 
+tThread * find_func_by_name(string name)
+{
+    int i;
+    debugf("[find_func] working on %s\n", name);
+    for (i = 0; i < global_functions_count; i++)
+    {
+        debugf("[find_func]:comparing %s with %s with type %s\n", name, global_functions[i]->name, global_functions[i]->return_type);
+        if (strcmp(name, global_functions[i]->name) == 0)
+        {
+            debugf("[func_is_defined] %s is defined\n", name);
+            return global_functions[i];
+        }
+    }
+    return NULL;
+}
 
 void init_functions_stack()
 {

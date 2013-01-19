@@ -1,7 +1,46 @@
 # Eve programming language input/output library.
 
-cdef proc printf from stdio; # This will include stdio.h, no need to do repeat it.
-cdef proc scanf;
+import types;
+
+cdef proc printf(str format, ...) from stdio; # This will include stdio.h, no need to do repeat it.
+cdef proc scanf(str format, ...);
+cdef proc wait;
+cdef proc wipe;
 
 #windows specific
 cdef func char getch from conio;
+
+class tIO	
+	int x;
+	func int getInt
+		int x;
+		scanf("%d", @x);
+		return x;
+	end
+	
+	proc putStr(str x)
+		printf("%s", x);
+	end
+	
+	proc putInt(int x)
+		printf("%d", x);
+	end
+	
+	proc putChar(char c)
+		printf("%c", c);
+	end
+	
+	proc putFloat(float f)
+		printf("%f", f);
+	end
+	
+	proc Clear
+		wipe;
+	end
+	
+	proc Wait
+	    wait;
+	end
+end
+
+tIO IO;

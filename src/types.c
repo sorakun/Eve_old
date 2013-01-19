@@ -12,36 +12,41 @@
 #include "lex.h"
 #include "parse.h"
 
-tType * create_global_types()
+void create_global_types()
 {
-    tType * types = (tType*)eve_malloc(6*sizeof(tType));
-    types[0].BasicType = _int;
-    types[1].BasicType = _str;
-    types[2].BasicType = _float;
-    types[3].BasicType = _char;
-    types[4].BasicType = _bool;
-    types[5].BasicType = _void;
+    global_types_count = 6;
+    global_types = (tType*)eve_malloc(global_types_count*sizeof(tType));
 
-    types[0].name = strdup("int");
-    types[0].pointer = 0;
-    types[0].pointerto = NULL;
-//    types[1].name = strdup("str");
-//    types[1].pointer = 0;
-//    types[1].pointerto = NULL;
-    types[1].name = strdup("float");
-    types[1].pointer = 0;
-    types[1].pointerto = NULL;
-    types[2].name = strdup("char");
-    types[2].pointer = 0;
-    types[2].pointerto = NULL;
-    types[3].name = strdup("bool");
-    types[3].pointer = 0;
-    types[3].pointerto = NULL;
-    types[4].name = strdup("void");
-    types[4].pointer = 0;
-    types[4].pointerto = NULL;
+    global_types[0].BasicType = _int;
+    global_types[1].BasicType = _str;
+    global_types[2].BasicType = _float;
+    global_types[3].BasicType = _char;
+    global_types[4].BasicType = _bool;
+    global_types[5].BasicType = _void;
 
-    return types;
+    global_types[0].name = strdup("int");
+    global_types[0].pointer = 0;
+    global_types[0].pointerto = NULL;
+
+    global_types[1].pointer = 0;
+    global_types[1].pointerto = NULL;
+    global_types[1].name = strdup("float");
+
+    global_types[2].name = strdup("char");
+    global_types[2].pointer = 0;
+    global_types[2].pointerto = NULL;
+
+    global_types[3].name = strdup("bool");
+    global_types[3].pointer = 0;
+    global_types[3].pointerto = NULL;
+
+    global_types[4].name = strdup("void");
+    global_types[4].pointer = 0;
+    global_types[4].pointerto = NULL;
+
+    global_types[5].name = strdup("str");
+    global_types[5].pointer = 1;
+    global_types[5].pointerto = strdup("char");
 }
 
 void add_basic_type(const string name, tBasicType BasicType, int maxsize, tField * fields)

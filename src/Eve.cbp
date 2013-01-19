@@ -35,7 +35,7 @@ Inorder to compile Eve correctly, you need to download and compile Tiny C Compil
 				<Option object_output="../obj/bin/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-r main.eve" />
+				<Option parameters="-w -r main.eve" />
 				<Compiler>
 					<Add option="-g" />
 					<Add directory="../../tcc-0.9.25/win32/libtcc" />

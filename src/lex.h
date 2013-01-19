@@ -20,10 +20,10 @@ typedef enum tTokenType
 
     AND = -100, AS, AUTO, BEGIN, BREAK, CASE, CATCH, CLASS, CONST, CONTINUE, DEFAULT, DO,  ELSE,
     ELIF, END, EXTENDS, EXTERN, FALSE, FOR , FUNC, FOREACH, FROM, IF, _IN, INCLUDE, IS,
-    LOCAL, NIL, NOT, OR, PROC, PRIVATE, PROTECTED, PUBLIC, REGISTER, REQUIRE,
+    LOCAL, NIL, NOT, OR, PROC, PROPERTY, REGISTER, REQUIRE,
     RETURN,REPEAT, STEP, STATIC, SWITCH, THROW, TRUE, THEN, TRY, TO, TYPE, UNTIL, USE,
     VAR,  VOLATILE, WHILE, WITH, XOR, OF, KEY, VIRTUAL, STATIC_CALL, DYN_CALL, CTYPE,
-
+    READ, WRITE, NEW,
     /* types */
     ARRAY, STRUCT, ENUM,
     /* Others. */
@@ -81,10 +81,12 @@ static const tToken Tokens[] =
     {NOT, "not"},
     {OR, "or"},
     {PROC, "proc"},
-    //{PRIVATE, "private"},
-    //{PROTECTED, "protected"},
-    //{PUBLIC, "public"},
+
+    {PROPERTY, "property"},
+
     {REPEAT, "repeat"},
+    {READ, "read"},
+    {WRITE, "write"},
     //{REGISTER, "register"},
     {LOCAL, "local"},
     {RETURN, "return"},
@@ -100,6 +102,7 @@ static const tToken Tokens[] =
     {TYPE, "type"},
     {UNTIL, "until"},
     {VAR, "var"},
+    {NEW, "new"},
     //{VOLATILE, "volatile"},
     {VIRTUAL, "virtual"},
     {WHILE, "while"},
@@ -128,15 +131,14 @@ static const tToken Tokens[] =
     {RSHIFT, ">>"},
     {STATIC_CALL, "::"},
     {DYN_CALL, "->"},
-    {'@', "@"},
+
     /* single-character tokens */
     {'(', "("}, {')', ")"}, {'[', "["}, {']', "]"},
     {'{', "{"}, {'}', "}"}, {'.', "."}, {',', ","},
-    {';', ";"}, {'+', "+"},
+    {';', ";"}, {'+', "+"}, {'~', "~"}, {'@', "@"},
     {'-', "-"}, {'*', "*"}, {'/', "/"}, {'%', "%"},
     {'=', "="}, {'<', "<"}, {'>', ">"}, {'?', "?"},
-    {'!',"!"}, {'|',"|"}, {'^',"^"}, {':',":"},
-    {'~', "~"},
+    {'!', "!"}, {'|', "|"}, {'^', "^"}, {':', ":"},
 };
 
 typedef enum tDefinedToken

@@ -12,12 +12,15 @@
 #include "lex.h"
 #include "parse.h"
 #include "threads.h"
-
+/*
+ * strdup causes a segmentation fault, while passing a NULL pointer.
+ * This is a remake, to check if the parameter is NULL or not.
+ */
 char * dupstr(const char *s)
 {
     if (s == NULL)
         return NULL;
-    char *const result = malloc(strlen(s) + 1);
+    char * const result = malloc(strlen(s) + 1);
     if (result != NULL)
     {
         strcpy(result, s);

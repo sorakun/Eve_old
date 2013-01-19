@@ -15,6 +15,8 @@ int func_is_defined(string name, tThreadType type);
 
 tThread * find_func(string name, tThreadType type);
 
+tThread * find_func_by_name(string name);
+
 void init_functions_stack();
 
 void register_function(tThread * func);

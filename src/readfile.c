@@ -115,3 +115,11 @@ string strdup(const string src)
     return p;
 }
 #endif
+
+int match_str(char * s1, char * s2)
+{
+    if ((s1 == NULL) || (s2 == NULL))
+        return 0;
+    else
+        return (strcmp(s1, s2) == 0);
+}

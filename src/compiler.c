@@ -14,7 +14,7 @@
 
 int eve_compile(char * file, int argc, char ** argv)
 {
-    TCCState *s;
+    TCCState * s;
 
     s = tcc_new();
     if (!s)
@@ -32,10 +32,10 @@ int eve_compile(char * file, int argc, char ** argv)
     tcc_add_library(s, "libtcc1");
     tcc_add_library(s, "user32");
 #endif
-
-//    if(eve_enable_debug == 1)
-//       tcc_enable_debug(s);
-
+/*
+    if(eve_enable_debug == 1)
+       tcc_enable_debug(s);
+*/
     int i = 0;
     for(; i<cimport_files_count; i++)
         if (tcc_add_file(s, cimport_files[i]) == -1)
@@ -62,6 +62,6 @@ int eve_compile(char * file, int argc, char ** argv)
         tcc_run(s, argc, argv);
         break;
     }
-    tcc_delete(s);
+    /*tcc_delete(s);*/
     return 0;
 }

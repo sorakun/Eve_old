@@ -35,5 +35,8 @@
 #define EVE_WRONG_METHOD_DEFINITION     25
 #define EVE_DEFENITION_EXPECTED         26
 #define EVE_INVALID_OPERATION           27
+#define EVE_READ_FUNC_EXISTS            28
+#define EVE_WRITE_FUNC_EXISTS           29
+#define EVE_INVALID_USE_OF_READ_WRITE   30
 
 #endif

@@ -22,7 +22,7 @@ int is_member_func(char * name, class_ * c)
     for(; pos < c->mcount; pos ++)
     {
         debugf("looking for class func %s vs %s (%s)\n", name, c->methodes[pos]->name, c->methodes[pos]->gen_name);
-        if(strcmp(name, c->methodes[pos]->name) == 0)
+        if(match_str(name, c->methodes[pos]->name))
             return pos;
     }
     return -1;
@@ -37,7 +37,7 @@ int is_member_data(char * name, class_ * c)
     debugf("checking existance of %s in class %s, have %d data\n", name, c->name, c->vcount);
     int pos = 0;
     for(; pos < c->vcount; pos++)
-        if(strcmp(name, c->variables[pos].name) == 0)
+        if(match_str(name, c->variables[pos].name))
             return pos;
     return -1;
 }
@@ -68,7 +68,7 @@ tThread * get_member_func(char * name, class_ * c)
     for(; pos < c->mcount; pos ++)
     {
         debugf("looking for class func %s vs %s (%s)\n", name, c->methodes[pos]->name, c->methodes[pos]->gen_name);
-        if(strcmp(name, c->methodes[pos]->name) == 0)
+        if(match_str(name, c->methodes[pos]->name))
             return c->methodes[pos];
     }
     return NULL;

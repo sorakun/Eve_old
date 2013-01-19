@@ -42,7 +42,7 @@
 
 #define string char *
 
-#define EVE_DEBUG
+//#define EVE_DEBUG
 
 #ifdef EVE_DEBUG
 #define debugf debug

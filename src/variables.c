@@ -37,12 +37,13 @@ int var_is_defined(string name, tThread * thread, int check_parent)
             return 1;
     }
 
-    if (thread->parent_class != NULL)
-    {
-        debugf("[varisdefined] moving to parent class, it contains %d\n", thread->parent_class->vcount);
-        if (is_member_data(name, thread->parent_class) != -1)
-            return 1;
-    }
+//    if (thread->parent_class != NULL)
+//    {
+//        debugf("[varisdefined] moving to parent class, it contains %d\n", thread->parent_class->vcount);
+//        if (is_member_data(name, thread->parent_class) != -1)
+//            return 1;
+//    }
+
     debugf("[varisdefined] moving to parent\n");
     // if not in our level, search in higher levels
     if((thread->parent != NULL ) && (check_parent == 1))

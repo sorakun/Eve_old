@@ -822,6 +822,30 @@ l:
             if(tmp_pos == -1)
                 eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+
+            tThread * fn = find_func(thread->instructions[thread->icount]->type.str, _proc);
+
+            if (fn->pcount > thread->instructions[thread->icount]->acount)
+                eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, parameters count of function %s is different from the definition",
+                                 thread->instructions[thread->icount]->type.source, thread->instructions[thread->icount]->type.line_num, thread->instructions[thread->icount]->type.pos, thread->instructions[thread->icount]->type.str);
+            if ((fn->unlimited_args==0) && (fn->pcount < thread->instructions[thread->icount]->acount))
+                eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, parameters count of function %s is different from the definition",
+                                 thread->instructions[thread->icount]->type.source, thread->instructions[thread->icount]->type.line_num, thread->instructions[thread->icount]->type.pos, thread->instructions[thread->icount]->type.str);
+            int i = 0;
+            debugf("[func_is_defined]: func %s have %d param\n", fn->name, fn->pcount);
+            for (; i < fn->pcount; i++)
+            {
+                debugf("[func_is_defined]: param %d is %s\n", i, fn->params[i].type);
+                match_type(thread->instructions[thread->icount]->args[i], fn->params[i].type, thread);
+            }
+
+            for(i = fn->pcount; i < thread->instructions[thread->icount]->acount;  i++)
+            {
+                debugf("param %d\n", i);
+                string mytype = get_op_type(thread->instructions[thread->icount]->args[i], thread);
+                match_type(thread->instructions[thread->icount]->args[i], mytype, thread);
+            }
+
             thread->icount++;
             li->pos = tmp_pos;
         }
@@ -835,6 +859,30 @@ l:
             if(tmp_pos == -1)
                 eve_syntax_error_expected(EVE_WRONG_TOKEN_EXPECED, li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, ';');
             thread->instructions[thread->icount] = gen_instruction(li, li->pos, tmp_pos-1, thread, NULL);
+
+            tThread * fn = find_func(thread->instructions[thread->icount]->type.str, _func);
+
+            if (fn->pcount > thread->instructions[thread->icount]->acount)
+                eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, parameters count of function %s is different from the definition",
+                                 thread->instructions[thread->icount]->type.source, thread->instructions[thread->icount]->type.line_num, thread->instructions[thread->icount]->type.pos, thread->instructions[thread->icount]->type.str);
+            if ((fn->unlimited_args==0) && (fn->pcount < thread->instructions[thread->icount]->acount))
+                eve_custom_error(EVE_WRONG_PARAM_NUMBER, "file: '%s', line: %d, pos: %d, parameters count of function %s is different from the definition",
+                                 thread->instructions[thread->icount]->type.source, thread->instructions[thread->icount]->type.line_num, thread->instructions[thread->icount]->type.pos, thread->instructions[thread->icount]->type.str);
+            int i = 0;
+            debugf("[func_is_defined]: func %s have %d param\n", fn->name, fn->pcount);
+            for (; i < fn->pcount; i++)
+            {
+                debugf("[func_is_defined]: param %d is %s\n", i, fn->params[i].type);
+                match_type(thread->instructions[thread->icount]->args[i], fn->params[i].type, thread);
+            }
+
+            for(i = fn->pcount; i < thread->instructions[thread->icount]->acount;  i++)
+            {
+                debugf("param %d\n", i);
+                string mytype = get_op_type(thread->instructions[thread->icount]->args[i], thread);
+                match_type(thread->instructions[thread->icount]->args[i], mytype, thread);
+            }
+
             if ((thread->instructions[thread->icount]->type.TT == '.') || (thread->instructions[thread->icount]->type.TT == DYN_CALL))
             {
                 string tname = get_op_type(thread->instructions[thread->icount], thread);
@@ -871,18 +919,18 @@ l:
         if (token_is_op(thread->instructions[thread->icount]->type))
             switch(thread->instructions[thread->icount]->type.TT)
             {
-                case '=':
-                    match_type(thread->instructions[thread->icount]->right, type, thread);
-                    break;
-                case '.':
-                case DYN_CALL:
-                    match_type(thread->instructions[thread->icount], "void", thread);
-                    break;
+            case '=':
+                match_type(thread->instructions[thread->icount]->right, type, thread);
+                break;
+            case '.':
+            case DYN_CALL:
+                match_type(thread->instructions[thread->icount], "void", thread);
+                break;
 
-                default:
-                    eve_custom_error(EVE_INVALID_OPERATION, "file: '%s', line: %d, pos: %d, invalid operation '%s' assignment or method call expected.\n",
-                                     thread->instructions[thread->icount]->type.source, thread->instructions[thread->icount]->type.line_num,
-                                     thread->instructions[thread->icount]->type.pos, thread->instructions[thread->icount]->type.str);
+            default:
+                eve_custom_error(EVE_INVALID_OPERATION, "file: '%s', line: %d, pos: %d, invalid operation '%s' assignment or method call expected.\n",
+                                 thread->instructions[thread->icount]->type.source, thread->instructions[thread->icount]->type.line_num,
+                                 thread->instructions[thread->icount]->type.pos, thread->instructions[thread->icount]->type.str);
             }
 
         if(type == NULL)
@@ -1751,7 +1799,12 @@ void doclassvar(LexInfo * li,tThread * thread, class_ * c)
     }
     else
     {
-
+        int is_property = 0;
+        if (currenttoken(li) == PROPERTY)
+        {
+            is_property = 1;
+            lexstep(li);
+        }
         match(li, IDENTIFIER);
 
         char * type = strdup(currenttokenstring(li));
@@ -1768,12 +1821,71 @@ label:
             c->variables[c->vcount].name = strdup(currenttokenstring(li));
             c->variables[c->vcount].type = strdup(type);
             c->variables[c->vcount].info = li->TokenInfo[li->pos];
+            c->variables[c->vcount].reads = NULL;
+            c->variables[c->vcount].writes = NULL;
+            c->variables[c->vcount].is_property = is_property;
+
             if (!name_is_unique(c->variables[c->vcount].name, thread, 1))
                 eve_custom_error(EVE_ID_ALREADY_DEFINED, "file: '%s', line: %d, pos: %d, identifier '%s' is already defined.",
                                  li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, c->variables[c->vcount].name);
-            c->vcount++;
 
             lexstep(li);
+            if  (currenttoken(li) == READ)
+            {
+                if (c->variables[c->vcount].reads != NULL)
+                    eve_custom_error(EVE_READ_FUNC_EXISTS,"file: '%s', line: %d, pos: %d, variable '%s' already have a read function.",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, c->variables[c->vcount].name);
+                lexstep(li);
+                match(li, IDENTIFIER);
+
+                int p = is_member_func(currenttokenstring(li), c);
+                tThread * thefunc = NULL;
+                if (p != -1)
+                    thefunc = c->methodes[p];
+
+                if (thefunc == NULL)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, function/procedure %s is not defined.\n",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                if (thefunc->type != _func)
+                    eve_custom_error(EVE_INVALID_USE_OF_READ_WRITE, "file: '%s', line: %d, pos: %d, read can only be applied to functions.\n",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                if (strcmp(thefunc->return_type, c->variables[c->vcount].type) != 0)
+                    eve_custom_error(EVE_INVALID_USE_OF_READ_WRITE, "file: '%s', line: %d, pos: %d, read function's '%s' type does not match property's type '%s'.\n",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, thefunc->return_type, c->variables[c->vcount].type);
+
+                c->variables[c->vcount].reads = thefunc;
+                lexstep(li);
+            }
+
+            if  (currenttoken(li) == WRITE)
+            {
+                if (c->variables[c->vcount].writes != NULL)
+                    eve_custom_error(EVE_WRITE_FUNC_EXISTS,"file: '%s', line: %d, pos: %d, variable '%s' already have a write function.",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, c->variables[c->vcount].name);
+                lexstep(li);
+                match(li, IDENTIFIER);
+
+                int p = is_member_func(currenttokenstring(li), c);
+                tThread * thefunc = NULL;
+                if (p != -1)
+                    thefunc = c->methodes[p];
+
+                if (thefunc == NULL)
+                    eve_custom_error(EVE_UNDEFINED_IDENTIFIER, "file: '%s', line: %d, pos: %d, function/procedure %s is not defined.\n",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+                if (thefunc->type != _proc)
+                    eve_custom_error(EVE_INVALID_USE_OF_READ_WRITE, "file: '%s', line: %d, pos: %d, read can only be applied to procedures.\n",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, currenttokenstring(li));
+
+                if ((thefunc->pcount != 2) || (strcmp(thefunc->params[1].type, c->variables[c->vcount].type)!=0))
+                    eve_custom_error(EVE_INVALID_USE_OF_READ_WRITE, "file: '%s', line: %d, pos: %d, write procedure's parameter type '%s' does not match property's type '%s'.\n",
+                                     li->source, li->TokenInfo[li->pos].line_num, li->TokenInfo[li->pos].pos, thefunc->return_type, c->variables[c->vcount].type);
+
+                c->variables[c->vcount].writes = thefunc;
+                lexstep(li);
+            }
+
+            c->vcount++;
         }
         if(currenttoken(li) == ',')
             goto label;

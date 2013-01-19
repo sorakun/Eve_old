@@ -18,9 +18,11 @@
 
 FILE * out;
 FILE * hout;
+char * spaces;
 
 void gen_code_func(tThread * func);
 
+// translates Eve tokens to C
 string get_token_str(token_node token)
 {
     switch (token.TT)
@@ -208,14 +210,41 @@ void outputnode(tStatementNode * node, int EOS)
                     outputnode(node->right,  0);
                 }
             }
-            else if (node->type.TT == '.')
+            else if ((node->type.TT == '.')|| (node->type.TT == DYN_CALL))
             {
                 debugf("output class = %d", node->right->member_func);
                 if(node->right->member_func == 0)
                 {
-                    outputnode(node->left,  0);
-                    fprintf(out, " . ");
-                    outputnode(node->right,  0);
+                    // get mode
+                    tType type = find_type(get_op_type(node->left, node->parent_thread));
+                    if (node->type.TT == DYN_CALL)
+                        type = find_type(type.pointerto);
+
+                    int p = is_member_data(node->right->type.str, &type.class_info);
+
+                    tVar my_var = type.class_info.variables[p];
+
+                    if (node->parent_thread->parent_class != NULL)
+                        my_var.is_property = 0;
+
+                    if ((my_var.is_property == 1) && (my_var.reads = NULL))
+                    {
+                        if (node->type.TT == '.')
+                            fprintf(out, "%s (&", my_var.reads->gen_name);
+                        else
+                            fprintf(out, "%s (", my_var.reads->gen_name);
+                        outputnode(node->left, 0);
+                        fprintf(out, ")");
+                    }
+                    else
+                    {
+                        outputnode(node->left,  0);
+                        if (node->type.TT == '.')
+                            fprintf(out, " . ");
+                        else
+                            fprintf(out, " -> ");
+                        outputnode(node->right,  0);
+                    }
                 }
                 else
                 {
@@ -227,7 +256,8 @@ void outputnode(tStatementNode * node, int EOS)
                     }
                     else
                     {
-                        fprintf(out, " & ");
+                        if (node->type.TT == '.')
+                            fprintf(out, " & ");
                         outputnode(node->left, 0);
                     }
 
@@ -244,44 +274,40 @@ void outputnode(tStatementNode * node, int EOS)
                     fprintf(out, ")");
                 }
             }
-            else if (node->type.TT == DYN_CALL)
+            else
             {
-                debugf("output class = %d", node->right->member_func);
-                if(node->right->member_func == 0)
+                tType type = find_type(get_op_type(node->left->left, node->parent_thread));
+                debugf("type %d name %s left is %s\n", type.type_kind, type.name, node->left->left->type.str);
+                int p = -1;
+                tVar my_var;
+                my_var.is_property = 0;
+                my_var.writes = NULL;
+                if (type.type_kind == __class)
                 {
-                    outputnode(node->left,  0);
-                    fprintf(out, " -> ");
-                    outputnode(node->right,  0);
+                    p = is_member_data(node->left->right->type.str, &type.class_info);
+                    my_var = type.class_info.variables[p];
+                }
+                if (node->parent_thread->parent_class != NULL)
+                    my_var.is_property = 0;
+                //Write mod
+                if ((node->type.TT == '=') && ((node->left->type.TT == '.') || (node->left->type.TT == DYN_CALL)) && (my_var.is_property) && (my_var.writes != NULL))
+                {
+                    printf("awesome\n");
+                    if (node->left->type.TT == DYN_CALL)
+                        fprintf(out, "%s (", my_var.writes->gen_name);
+                    else
+                        fprintf(out, "%s (&", my_var.writes->gen_name);
+                    outputnode(node->left->left, 0);
+                    fprintf(out, ",");
+                    outputnode(node->right, 0);
+                    fprintf(out, ")");
                 }
                 else
                 {
-
-                    fprintf(out, "%s (", node->right->gen_name);
-                    if(var_is_defined(node->left->type.str, node->parent_thread, 1))
-                    {
-                        fprintf(out, "%s", node->left->type.str);
-                    }
-                    else
-                    {
-                        //  fprintf(out, " & ");
-                        outputnode(node->left, 0);
-                    }
-                    if(node->right->acount>0)
-                        fprintf(out, ", ");
-                    for (i=0; i<node->right->acount; i++)
-                    {
-                        outputnode(node->right->args[i],  0);
-                        if (i+1 < node->acount)
-                            fprintf(out, ", ");
-                    }
-                    fprintf(out, ")");
+                    outputnode(node->left,  0);
+                    fprintf(out, " %s ", get_token_str(node->type));
+                    outputnode(node->right,  0);
                 }
-            }
-            else
-            {
-                outputnode(node->left,  0);
-                fprintf(out, " %s ", get_token_str(node->type));
-                outputnode(node->right,  0);
             }
         }
         fprintf(out, ")");
@@ -333,10 +359,10 @@ void gen_code_func(tThread * func)
     // generating variables
     int i;
     // generating global variables
-
-    if (!func->body_defined)
-        eve_custom_error(EVE_UNKNOWN_DATA_TYPE,"file: '%s', line: %d, pos: %d, function/procedure '%s' is declared but not defined.",
-                         func->info.source, func->info.line_num, func->info.pos, func->name);
+    if ((func->type == _func) || (func->type == _proc))
+        if (!func->body_defined)
+            eve_custom_error(EVE_UNKNOWN_DATA_TYPE,"file: '%s', line: %d, pos: %d, function/procedure '%s' is declared but not defined.",
+                             func->info.source, func->info.line_num, func->info.pos, func->name);
 
     for (i=0; i < func->vcount; i++)
     {
@@ -377,10 +403,12 @@ string gen_code(string file, tThread * main)
     for(i=0; i<included_files_count; i++)
     {
         fprintf(out, "#include <%s.h>\n", included_files[i]);
+        fprintf(hout, "#include <%s.h>\n", included_files[i]);
     }
 
     fprintf(out, "#include \"%s\"\n", fname2);
     // generating types in hout (.h)
+    fprintf(hout, "\n/* data types */\n", fname2);
     for (i = BASIC_TYPES_COUNT-1; i<global_types_count; i++)
     {
         if (global_types[i].type_kind == __ctype)
@@ -429,13 +457,14 @@ string gen_code(string file, tThread * main)
     }
 
     // generating global variables
+    fprintf(hout, "\n/* global variables */\n", fname2);
     for (i=0; i < main->vcount; i++)
     {
         if (main->vars[i].mod != _none)
-            fprintf(out, "%s ", mod_to_str(main->vars[i].mod));
-        fprintf(out, "%s ", main->vars[i].type);
+            fprintf(hout, "%s ", mod_to_str(main->vars[i].mod));
+        fprintf(hout, "%s ", main->vars[i].type);
 
-        fprintf(out, "%s;\n", main->vars[i].name);
+        fprintf(hout, "%s;\n", main->vars[i].name);
     }
 
     for (i=0; i < global_functions_count; i++)

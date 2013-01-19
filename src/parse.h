@@ -77,14 +77,14 @@ typedef struct tVar
     string type;
     tMod mod;
     token_node info;
+    struct tThread * reads, * writes; // OOP
+    int is_property;
 } tVar;
 
 typedef enum tThreadType
 {
     _main, _func, _proc, _block, _repeat, _while, _if, _elif, _else, _for, _foreach
 } tThreadType;
-
-struct tThread;
 
 typedef struct tStatementNode
 {
@@ -109,7 +109,7 @@ typedef struct tStatementNode
 typedef struct tThread
 {
     int cdef;
-    string name; // name is case of proc/func
+    string name; // name in case of proc/func
     string gen_name; // name of the generated func (OOP)
     tThreadType type;
     string return_type; // a function's returning type
@@ -117,9 +117,8 @@ typedef struct tThread
     int icount; // # of instructions
     tVar * vars;
     int vcount; // # of constant variables,
-    int unlimited_args; // does it support unlimited arguments ex: printf(...)?
+    int unlimited_args; // does it support unlimited arguments like printf(...)?
     tType * global_types; // pointer to types. Types are always global
-    struct tThread * global_functions; // pointer to global parameters
     int body_defined; // defenition or declaration of func/proc
     tVar * params;
     int pcount;

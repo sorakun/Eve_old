@@ -1,0 +1,15 @@
+# libstd.eve
+# This library defines some utility functions, used for memory allocation.
+
+cimport "clib/eve.c";
+
+import types;
+
+cdef proc mem_alloc(...);
+cdef func int sizeof(...);
+
+#this function is not standard but it's supported by tcc
+cdef func int typeof(...);
+cdef proc free(...);
+
+cdef func int system(str cmd);
